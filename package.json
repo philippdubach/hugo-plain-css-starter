@@ -1,0 +1,14 @@
+{
+  "name": "hugo-plain-css-starter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/hugo.mjs server --disableFastRender",
+    "build": "node scripts/hugo.mjs --gc --minify --panicOnWarning --cleanDestinationDir",
+    "check": "npm run build && node scripts/check.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

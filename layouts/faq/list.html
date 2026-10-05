@@ -1,0 +1,6 @@
+{{ define "main" }}
+  <main id="main-content" class="standalone-page" tabindex="-1">
+    <header class="page-heading"><h1>{{ .Title }}</h1>{{ with .Description }}<p class="page-intro">{{ . }}</p>{{ end }}</header>
+    <ul class="section-list">{{ range .Pages.ByTitle }}<li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>{{ end }}</ul>
+  </main>
+{{ end }}

@@ -1,0 +1,27 @@
+{{ define "main" }}
+  <main id="main-content" class="standalone-page faq-page" tabindex="-1">
+    <article>
+      <header class="page-heading"><h1>{{ .Title }}</h1>{{ with .Description }}<p class="page-intro">{{ . }}</p>{{ end }}</header>
+      <div class="article-body">{{ .Content }}</div>
+      {{- /* Aggregate Q&A from posts in this category, newest first. */ -}}
+      {{- $categoryLower := .Params.category | lower -}}
+      {{- $postsWithFAQ := partialCached "faq-posts-by-category.html" $categoryLower $categoryLower -}}
+      {{- $allFAQs := slice -}}
+      {{- range $postsWithFAQ -}}
+        {{- $post := . -}}
+        {{- range .Params.faq -}}
+          {{- $allFAQs = $allFAQs | append (dict "question" .question "answer" .answer "sourceURL" $post.RelPermalink "sourceTitle" $post.Title) -}}
+        {{- end -}}
+      {{- end -}}
+      {{- $displayFAQs := first 20 $allFAQs -}}
+      {{- if gt (len $displayFAQs) 0 -}}
+      <dl class="faq-list">
+        {{- range $displayFAQs -}}
+        <dt>{{ .question }}</dt>
+        <dd>{{ .answer | markdownify }} <span class="faq-source">From <a href="{{ .sourceURL }}">{{ .sourceTitle }}</a>.</span></dd>
+        {{- end -}}
+      </dl>
+      {{- end -}}
+    </article>
+  </main>
+{{ end }}

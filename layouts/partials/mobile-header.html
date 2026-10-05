@@ -1,0 +1,22 @@
+<header class="mobile-header">
+  {{- /* The accessible name must contain the visible text (label-in-name). */ -}}
+  <a class="mobile-brand" href="{{ site.Home.RelPermalink }}" aria-label="{{ site.Params.author }}, home">{{ site.Params.brand_initials }}</a>
+  <div class="mobile-actions">
+    {{ partial "theme-button.html" (dict "class" "theme-toggle--mobile") }}
+    <button class="icon-button" type="button" data-menu-open aria-label="Open menu" aria-haspopup="dialog" aria-controls="mobile-menu" aria-expanded="false">
+      <span class="control-symbol control-symbol--menu" aria-hidden="true"></span>
+    </button>
+  </div>
+</header>
+{{- /* The dialog menu needs JavaScript and the desktop rail is hidden on
+       mobile widths, so no-JS mobile readers get plain navigation links. */ -}}
+<noscript>
+  <nav class="noscript-nav" aria-label="Site">
+    <a href="/">Home</a>
+    <a href="/writing/">Writing</a>
+    <a href="/projects/">Projects</a>
+    <a href="/research/">Research</a>
+    <a href="/links/">Links</a>
+    <a href="/subscribe/">Subscribe</a>
+  </nav>
+</noscript>

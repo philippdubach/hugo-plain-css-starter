@@ -1,0 +1,21 @@
+{{- /* Reuse the category aggregation used by visible HTML and FAQ schema. */ -}}
+{{- $categoryLower := .Params.category | lower -}}
+{{- $posts := partialCached "faq-posts-by-category.html" $categoryLower $categoryLower -}}
+{{- $questions := slice -}}
+{{- range $posts -}}
+  {{- $post := . -}}
+  {{- range .Params.faq -}}
+    {{- $questions = $questions | append (dict "question" .question "answer" .answer "sourceURL" $post.Permalink "sourceTitle" $post.Title) -}}
+  {{- end -}}
+{{- end -}}
+{{ if gt (len $questions) 0 }}
+## Frequently Asked Questions
+
+{{ range first 20 $questions }}
+### {{ .question }}
+
+{{ .answer }}
+
+From [{{ .sourceTitle }}]({{ .sourceURL }}).
+
+{{ end }}{{ end }}

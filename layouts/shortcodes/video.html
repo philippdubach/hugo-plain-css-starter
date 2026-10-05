@@ -1,0 +1,44 @@
+{{- $baseUrl := (site.Params.image_cdn | default (strings.TrimSuffix "/" site.BaseURL)) -}}
+{{- $src := .Get "src" -}}
+{{- $srcMobile := .Get "srcMobile" | default "" -}}
+{{- $alt := .Get "alt" | default "" -}}
+{{- $width := .Get "width" | default "80%" -}}
+{{- $aspect := .Get "aspect" | default "16/9" -}}
+{{- $poster := .Get "poster" | default "" -}}
+{{- $mobileBreakpoint := .Get "mobileBreakpoint" | default "768px" -}}
+{{- $videoUrl := $src -}}
+{{- if not (hasPrefix $src "http") -}}
+  {{- $videoUrl = printf "%s/%s" $baseUrl $src -}}
+{{- end -}}
+{{- $mobileUrl := "" -}}
+{{- if $srcMobile -}}
+  {{- if hasPrefix $srcMobile "http" -}}
+    {{- $mobileUrl = $srcMobile -}}
+  {{- else -}}
+    {{- $mobileUrl = printf "%s/%s" $baseUrl $srcMobile -}}
+  {{- end -}}
+{{- end -}}
+{{- $posterUrl := "" -}}
+{{- if $poster -}}
+  {{- if hasPrefix $poster "http" -}}
+    {{- $posterUrl = $poster -}}
+  {{- else -}}
+    {{- $posterUrl = partial "media/url.html" (dict "src" $poster "width" 1200) -}}
+  {{- end -}}
+{{- end -}}
+{{- $widthClass := "video-loop--width-80" -}}
+{{- if eq $width "100%" }}{{ $widthClass = "video-loop--width-100" }}{{ end -}}
+{{- if eq $width "60%" }}{{ $widthClass = "video-loop--width-60" }}{{ end -}}
+{{- $aspectClass := "video-loop--16-9" -}}
+{{- if eq $aspect "4/3" }}{{ $aspectClass = "video-loop--4-3" }}{{ end -}}
+{{- if eq $aspect "1/1" }}{{ $aspectClass = "video-loop--1-1" }}{{ end -}}
+<div class="video-loop {{ $widthClass }} {{ $aspectClass }}">
+  <video controls muted loop playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noremoteplayback"
+         {{ with $posterUrl }}poster="{{ . }}"{{ end }}
+         aria-label="{{ $alt }}" data-ambient-video>
+    {{- with $mobileUrl }}
+    <source src="{{ . }}" type="video/mp4" media="(max-width: {{ $mobileBreakpoint }})">
+    {{- end }}
+    <source src="{{ $videoUrl }}" type="video/mp4">
+  </video>
+</div>

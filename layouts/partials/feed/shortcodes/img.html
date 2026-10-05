@@ -1,0 +1,8 @@
+{{- $src := .Get "src" -}}
+{{- $url := partial "media/url.html" (dict "src" $src "width" 1200 "quality" 80) -}}
+<figure>
+  <img src="{{ $url }}" alt="{{ .Get "alt" | default "" }}" style="max-width:100%;height:auto;"{{ with index hugo.Data "image-dimensions" $src }} width="{{ .width }}" height="{{ .height }}"{{ end }}>
+  {{- with .Get "caption" }}
+  <figcaption>{{ $.Page.RenderString . }}</figcaption>
+  {{- end }}
+</figure>

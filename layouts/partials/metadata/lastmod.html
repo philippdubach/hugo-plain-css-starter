@@ -1,0 +1,55 @@
+{{- /* Hugo's page Lastmod tracks its content file, not data dependencies.
+      Research records keep their actual edit time beside the data. Reuse this
+      value in machine-readable outputs only; never substitute build time or
+      filesystem mtime, and leave visible article dates unchanged. */ -}}
+{{- $lastmod := .Lastmod -}}
+{{- /* Draft edits can precede a scheduled publication. Public modification
+      metadata must start at publication, without changing source dates. */ -}}
+{{- if and .IsPage (not .Date.IsZero) (or $lastmod.IsZero (.Date.After $lastmod)) -}}
+  {{- $lastmod = .Date -}}
+{{- end -}}
+{{- if eq .RelPermalink "/research/" -}}
+  {{- with hugo.Data.research.lastmod -}}
+    {{- $dataLastmod := time.AsTime . -}}
+    {{- if or $lastmod.IsZero ($dataLastmod.After $lastmod) -}}
+      {{- $lastmod = $dataLastmod -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Collection dates describe their represented public content, including
+      synthetic indexes whose articles live in /posts/ rather than beneath
+      the index file. Share this calculation across schema, sitemap and exports. */ -}}
+{{- $children := slice -}}
+{{- if .IsHome -}}
+  {{- $posts := where (where site.RegularPages "Section" "posts") "Params.unlisted" "ne" true -}}
+  {{- $children = union (first 4 ((where $posts "Params.type" "ne" "Project").ByDate.Reverse)) (first 4 ((where $posts "Params.type" "Project").ByDate.Reverse)) -}}
+{{- else if and .IsPage (eq .Section "faq") -}}
+  {{- $sources := partialCached "faq-posts-by-category.html" (.Params.category | lower) (.Params.category | lower) -}}
+  {{- $questionCount := 0 -}}
+  {{- range $sources -}}
+    {{- if lt $questionCount 20 -}}
+      {{- $children = $children | append . -}}
+      {{- $questionCount = add $questionCount (len .Params.faq) -}}
+    {{- end -}}
+  {{- end -}}
+{{- else if not .IsPage -}}
+  {{- $children = .Pages -}}
+  {{- if or (eq .Section "writing") (eq .Section "projects") -}}
+    {{- $posts := where (where site.RegularPages "Section" "posts") "Params.unlisted" "ne" true -}}
+    {{- if eq .Section "projects" -}}
+      {{- $children = where (where site.RegularPages "Params.unlisted" "ne" true) "Params.type" "Project" -}}
+    {{- else -}}
+      {{- $children = where $posts "Params.type" "ne" "Project" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- range $children -}}
+  {{- $robots := .Params.robots | default "" | lower -}}
+  {{- if and (not .Params.private) (not .Params.unlisted) (not (strings.Contains $robots "noindex")) -}}
+    {{- $candidate := partial "metadata/lastmod.html" . -}}
+    {{- if and (not $candidate.IsZero) (or $lastmod.IsZero ($candidate.After $lastmod)) -}}
+      {{- $lastmod = $candidate -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $lastmod -}}

@@ -1,0 +1,24 @@
+{{- $src := .Page.Params.podcast_audio | default "" -}}
+{{- if $src -}}
+{{- $script := resources.Get "js/podcast-player.js" | minify | fingerprint -}}
+<section class="podcast-player" data-podcast-player data-show="Lorem ipsum" data-artwork="{{ site.Params.podcast_artwork | absURL }}" aria-label="{{ .Get "title" }}">
+  <div class="podcast-player__heading">
+    <img class="podcast-player__cover" src="{{ site.Params.podcast_artwork | absURL }}" width="120" height="120" alt="Lorem ipsum podcast cover" loading="lazy">
+    <div><p class="podcast-player__series">Lorem ipsum · Episode 01</p><h3 class="podcast-player__title">{{ .Get "title" | default "Lorem ipsum" }}</h3></div>
+  </div>
+  <audio controls preload="none" aria-label="{{ .Get "title" }}" src="{{ $src }}"></audio>
+  <div class="podcast-player__controls" hidden>
+    <button class="podcast-player__play" type="button" aria-label="Play episode">
+      <svg class="podcast-player__play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="podcast-player__pause-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+    </button>
+    <div class="podcast-player__timeline">
+      <input type="range" min="0" max="1601" value="0" step="1" aria-label="Seek in episode" aria-valuetext="0:00" disabled>
+      <div class="podcast-player__times"><span data-elapsed>0:00</span><span data-duration>{{ .Get "duration" }}</span></div>
+    </div>
+    <button class="podcast-player__speed" type="button" aria-label="Playback speed: 1 times">1×</button>
+  </div>
+  <p class="podcast-player__status" role="status" hidden></p>
+</section>
+<script defer src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>
+{{- end -}}

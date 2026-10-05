@@ -1,0 +1,17 @@
+{{ define "main" }}
+  <main id="main-content" class="article-content" tabindex="-1">
+    <article>
+      <header class="article-header">
+        <h1>{{ .Title }}</h1>
+      </header>
+      {{ partial "article-toc-mobile.html" . }}
+      <div class="article-body">
+        {{ .Content }}
+      </div>
+    </article>
+  </main>
+{{ end }}
+
+{{ define "timeline" }}
+  {{ partial "timeline.html" . }}
+{{ end }}

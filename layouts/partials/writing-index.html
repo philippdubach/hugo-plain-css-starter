@@ -1,0 +1,25 @@
+{{ $allPosts := where (where site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true }}
+{{ $articles := where $allPosts ".Params.type" "ne" "Project" }}
+{{ $categories := slice }}
+{{ range $articles }}{{ range .Params.categories }}{{ $categories = $categories | append . }}{{ end }}{{ end }}
+{{ $categories = sort (uniq $categories) }}
+<nav class="topic-filter" aria-label="Filter writing by topic" data-topic-filter>
+  {{- /* aria-current, not aria-pressed: these are links (aria-pressed is
+         invalid on role=link); "current item in a set" is the right state. */ -}}
+  <a href="{{ .RelPermalink }}" data-topic="all" aria-current="true">All</a>
+  {{ range $categories }}<a href="{{ $.RelPermalink }}?topic={{ . | urlize }}" data-topic="{{ . | urlize }}">{{ . }}</a>{{ end }}
+</nav>
+<p class="filter-status" data-filter-status role="status" aria-live="polite"></p>
+<ol class="writing-index" data-writing-index>
+  {{ range $articles.ByDate.Reverse }}
+    {{ $topicSlugs := slice }}
+    {{ range .Params.categories }}{{ $topicSlugs = $topicSlugs | append (. | urlize) }}{{ end }}
+    <li data-topics="{{ delimit $topicSlugs " " }}">
+      <time class="writing-index__date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02 Jan 2006" }}</time>
+      <div>
+        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        {{ with .Description }}<p>{{ . }}</p>{{ end }}
+      </div>
+    </li>
+  {{ end }}
+</ol>

@@ -1,0 +1,30 @@
+{{- /* Keep native table semantics and give wide tables their own scroll area. */ -}}
+{{- $width := .Page.Params.tablewidth | default "" -}}
+{{- if and $width (not (findRE `^(100|[1-9][0-9]?)%$` $width)) -}}
+  {{- errorf "Invalid tableWidth %q in %s: use a percentage from 1%% to 100%%" $width .Page.File.Path -}}
+{{- end -}}
+<div class="table-scroll"{{ with $width }} style="width: {{ . }}; margin-inline: auto;"{{ end }} tabindex="0" role="region" aria-label="Table {{ add .Ordinal 1 }} (scroll horizontally)">
+  <table
+    {{- range $key, $value := .Attributes }}
+      {{- if $value }}{{ printf " %s=%q" $key $value | safeHTMLAttr }}{{ end }}
+    {{- end }}>
+    <thead>
+      {{- range .THead }}
+      <tr>
+        {{- range . }}
+        <th scope="col"{{ with .Alignment }} style="text-align: {{ . }}"{{ end }}>{{ .Text }}</th>
+        {{- end }}
+      </tr>
+      {{- end }}
+    </thead>
+    <tbody>
+      {{- range .TBody }}
+      <tr>
+        {{- range . }}
+        <td{{ with .Alignment }} style="text-align: {{ . }}"{{ end }}>{{ .Text }}</td>
+        {{- end }}
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
+</div>

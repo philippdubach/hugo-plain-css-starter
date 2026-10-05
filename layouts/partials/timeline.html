@@ -1,0 +1,23 @@
+{{ with .Params.timeline }}
+  <aside class="timeline-rail" aria-label="Article timeline">
+    <div class="timeline-rail__inner">
+      <p class="utility-label">Timeline</p>
+      {{ range $groupIndex, $group := . }}
+        <section class="timeline-group{{ if eq $groupIndex 0 }} is-active{{ end }}" data-timeline-section="{{ $group.section }}" aria-hidden="{{ if eq $groupIndex 0 }}false{{ else }}true{{ end }}">
+          <h2 class="visually-hidden">{{ $group.section | humanize }}</h2>
+          <ol>
+            {{ range $group.entries }}
+              <li>
+                <span class="timeline-marker">{{ .marker }}</span>
+                <div>
+                  <h3>{{ .title }}</h3>
+                  <p>{{ .text }}</p>
+                </div>
+              </li>
+            {{ end }}
+          </ol>
+        </section>
+      {{ end }}
+    </div>
+  </aside>
+{{ end }}

@@ -1,0 +1,44 @@
+{{- $pages := where (where .Site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true -}}
+{
+  "generated": "{{ now.Format "2006-01-02T15:04:05Z07:00" }}",
+  "total_count": {{ len $pages }},
+  "site": {
+    "title": {{ .Site.Title | jsonify }},
+    "url": {{ .Site.BaseURL | jsonify }},
+    "author": {{ .Site.Params.author | jsonify }},
+    "description": {{ .Site.Params.description | jsonify }}
+  },
+  "posts": [
+    {{- range $index, $page := $pages }}
+    {{- if $index }},{{ end }}
+    {
+      "id": {{ $page.File.UniqueID | jsonify }},
+      "slug": {{ $page.Slug | jsonify }},
+      "title": {{ $page.Title | jsonify }},
+      "url": {{ $page.Permalink | jsonify }},
+      "description": {{ $page.Description | jsonify }},
+      "date_published": {{ $page.Date.Format "2006-01-02" | jsonify }},
+      "date_modified": {{ (partial "metadata/lastmod.html" $page).Format "2006-01-02" | jsonify }},
+      "type": {{ $page.Params.type | default "Article" | jsonify }},
+      "categories": {{ $page.Params.categories | default (slice) | jsonify }},
+      "keywords": {{ $page.Params.keywords | default (slice) | jsonify }},
+      "word_count": {{ $page.WordCount }},
+      "reading_time_minutes": {{ $page.ReadingTime }},
+      {{- with $page.Params.external_url }}
+      "external_url": {{ . | jsonify }},
+      {{- end }}
+      {{- with $page.Params.doi }}
+      "doi": {{ . | jsonify }},
+      {{- end }}
+      {{- if $page.Params.images }}
+      "image": {{ index $page.Params.images 0 | jsonify }},
+      {{- end }}
+      {{- /* Prefer the free frontmatter description over .Summary, which triggers
+             a full markdown render per post when no <!--more--> divider exists.
+             Posts with a description get a free summary; the small minority
+             without fall through to the rendered summary path. */ -}}
+      "summary": {{ with $page.Description }}{{ . | jsonify }}{{ else }}{{ $page.Summary | plainify | truncate 500 | jsonify }}{{ end }}
+    }
+    {{- end }}
+  ]
+}

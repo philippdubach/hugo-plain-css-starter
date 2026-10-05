@@ -1,0 +1,21 @@
+{{- $slug := .Get "slug" | default "" -}}
+{{- $route := printf "/posts/%s/" $slug -}}
+{{- $targets := partialCached "links/post-targets.html" .Page.Site .Page.Site.Language.Lang -}}
+{{- $matched := index $targets $route | default slice -}}
+{{- $valid := true -}}
+{{- if or (not $slug) (ne (len $matched) 1) -}}
+  {{- errorf "readnext: slug %q must resolve to exactly one published HTML post (found %d); see %s" $slug (len $matched) .Position -}}
+  {{- $valid = false -}}
+{{- else -}}
+  {{- $page := index $matched 0 -}}
+  {{- if not (partial "links/eligible-post.html" $page) -}}
+    {{- errorf "readnext: slug %q is not an eligible published HTML post; see %s" $slug .Position -}}
+    {{- $valid = false -}}
+  {{- end -}}
+  {{- if eq $page.Path .Page.Path -}}
+    {{- errorf "readnext: slug %q links to its own page; see %s" $slug .Position -}}
+    {{- $valid = false -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $valid -}}{{- $matched = slice -}}{{- end -}}
+{{- return $matched -}}

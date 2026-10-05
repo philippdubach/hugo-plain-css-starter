@@ -1,0 +1,9 @@
+{
+  "newsletters": [
+    {
+      "title": "Lorem ipsum: issue one",
+      "date": "January 2026",
+      "url": "/newsletter/example/"
+    }
+  ]
+}

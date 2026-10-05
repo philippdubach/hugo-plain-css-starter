@@ -1,0 +1,75 @@
+{{- $pages := partial "feed/pages.html" . -}}
+{
+  "version": "https://jsonfeed.org/version/1.1",
+  "title": {{ .Site.Title | jsonify }},
+  "home_page_url": {{ .Site.BaseURL | jsonify }},
+  "feed_url": {{ "/feed.json" | absURL | jsonify }},
+  "description": {{ .Site.Params.description | jsonify }},
+  "language": "en-US",
+  "icon": {{ "/icons/favicon.svg" | absURL | jsonify }},
+  "favicon": {{ "/icons/favicon.svg" | absURL | jsonify }},
+  "authors": [
+    {
+      "name": {{ .Site.Params.author | jsonify }},
+      "url": {{ "/about/" | absURL | jsonify }},
+      "avatar": {{ .Site.Params.default_image | jsonify }}
+    }
+  ],
+  "_starter": {
+    "about": "Additional site metadata",
+    "_ai": {
+      "llms_txt": {{ "/llms.txt" | absURL | jsonify }},
+      "llms_full_txt": {{ "/llms-full.txt" | absURL | jsonify }},
+      "markdown_available": true,
+      "markdown_url_pattern": "{post_url}index.md",
+      "markdown_example": {{ "/posts/lorem-ipsum/index.md" | absURL | jsonify }}
+    }
+  },
+  "items": [
+    {{- range $index, $page := $pages }}
+    {{- if $index }},{{ end }}
+    {
+      "id": {{ $page.Permalink | jsonify }},
+      "url": {{ $page.Permalink | jsonify }},
+      {{- with $page.Params.external_url }}
+      "external_url": {{ . | jsonify }},
+      {{- end }}
+      "title": {{ $page.Title | jsonify }},
+      "content_html": {{ partial "feed/content.html" $page | jsonify }},
+      "summary": {{ ($page.Description | default ($page.Summary | plainify | truncate 300)) | jsonify }},
+      {{- $image := "" }}
+      {{- if $page.Params.images }}
+        {{- $image = index $page.Params.images 0 }}
+      {{- else if $page.Site.Params.default_image }}
+        {{- $image = $page.Site.Params.default_image }}
+      {{- end }}
+      {{- if $image }}
+      "image": {{ $image | jsonify }},
+      {{- end }}
+      "date_published": {{ $page.Date.Format "2006-01-02T15:04:05Z07:00" | jsonify }},
+      "date_modified": {{ (partial "metadata/lastmod.html" $page).Format "2006-01-02T15:04:05Z07:00" | jsonify }},
+      "authors": [
+        {
+          "name": {{ $.Site.Params.author | jsonify }},
+          "url": {{ "/about/" | absURL | jsonify }}
+        }
+      ],
+      {{- with $page.Params.categories }}
+      "tags": {{ . | jsonify }},
+      {{- end }}
+      "_starter": {
+        "type": {{ $page.Params.type | default "Article" | jsonify }},
+        "word_count": {{ $page.WordCount }},
+        "reading_time_minutes": {{ $page.ReadingTime }},
+        {{- with $page.Params.keywords }}
+        "keywords": {{ . | jsonify }},
+        {{- end }}
+        {{- with $page.Params.doi }}
+        "doi": {{ . | jsonify }},
+        {{- end }}
+        "section": {{ $page.Section | jsonify }}
+      }
+    }
+    {{- end }}
+  ]
+}

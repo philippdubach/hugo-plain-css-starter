@@ -1,0 +1,88 @@
+{{- /*
+  Image shortcode — v3.0 lightbox revamp:
+    - <figure> + optional <figcaption> in body-serif italic for visible captions
+      (alt= stays for screen readers; caption= is for sighted readers).
+    - <dialog> lightbox with View Transitions morph from thumbnail.
+    - data-hires holds the full-size URL; the inner <img src> is empty until
+      first open, when the click handler hydrates it. Saves a parsed <img>
+      and a speculative request per closed dialog.
+    - format=auto lets Cloudflare serve AVIF to capable clients (~30%
+      smaller than WebP at the same perceptual quality).
+*/ -}}
+{{- $baseUrl := strings.TrimSuffix "/" (site.Params.image_cdn | default "") -}}
+{{- $src := .Get "src" -}}
+{{- $alt := .Get "alt" | default "" -}}
+{{- $caption := .Get "caption" | default "" -}}
+{{- $class := .Get "class" | default "" -}}
+{{- /* Reviewed per-source exceptions preserve native screenshot shadows and
+       transparent artwork without changing article sources or their dates. */ -}}
+{{- $unframed := eq (.Get "unframed") "true" -}}
+{{- with index hugo.Data "image-presentation" $src -}}
+    {{- $unframed = or $unframed (eq .frame "none") -}}
+{{- end -}}
+{{- $width := .Get "width" | default "80%" -}}
+{{- $imgWidth := .Get "imgWidth" | default "1200" -}}
+{{- /* Default imgHeight to auto: forcing 630 baked the OG aspect ratio onto
+       every body image, which clipped/distorted any source whose true ratio
+       differed (e.g. wide charts). Pass an explicit imgHeight to reserve
+       space and prevent CLS when you know the dimensions. */ -}}
+{{- $imgHeight := .Get "imgHeight" | default "auto" -}}
+{{- /* Verified source dimensions reserve space before a CDN image loads.
+       CSS keeps width:100% and height:auto, so its final appearance still
+       follows the downloaded image. Explicit shortcode dimensions win. */ -}}
+{{- $hasExplicitHeight := ne $imgHeight "auto" -}}
+{{- if not $hasExplicitHeight -}}
+    {{- with index hugo.Data "image-dimensions" $src -}}
+        {{- $imgWidth = .width -}}
+        {{- $imgHeight = .height -}}
+    {{- end -}}
+{{- end -}}
+{{- $priority := .Get "priority" | default "false" -}}
+{{- $id := printf "%s-%d" (replace (replace $src "/" "-") "." "-") .Ordinal -}}
+{{- /* Match the actual figure slot, including the mobile gutters and desktop
+       rail. One width ladder serves every breakpoint so narrow desktop figures
+       can select smaller files without losing resolution on Retina screens. */ -}}
+{{- $sizes := $width -}}
+{{- if hasSuffix $width "%" -}}
+    {{- $fraction := div (float (strings.TrimSuffix "%" $width)) 100 -}}
+    {{- $desktopRem := mul 45 $fraction -}}
+    {{- $mobileRem := mul 42.5 $fraction -}}
+    {{- $sizes = printf "(min-width: 80rem) %.6grem, (min-width: 48rem) min(%.6grem, calc(%svw - %.6grem)), min(%.6grem, calc(%svw - %.6grem))" $desktopRem $desktopRem (strings.TrimSuffix "%" $width) (mul 17 $fraction) $mobileRem (strings.TrimSuffix "%" $width) (mul 2.5 $fraction) -}}
+{{- end -}}
+{{- $candidates := slice -}}
+{{- if $baseUrl -}}
+{{- range slice 160 240 320 384 480 640 768 960 1200 1440 1600 2000 -}}
+    {{- $candidates = $candidates | append (printf "%s/cdn-cgi/image/width=%d,quality=80,format=auto/%s %dw" $baseUrl . $src .) -}}
+{{- end -}}
+{{- end -}}
+{{- $hires := partial "media/url.html" (dict "src" $src "width" 2000 "quality" 85) -}}
+{{- $thumbnail := partial "media/url.html" (dict "src" $src "width" 1200 "quality" 80) -}}
+
+<figure class="post-figure{{ if $unframed }} post-figure--unframed{{ end }}" style="width: {{ $width }}; margin: 1.5rem auto;">
+  <button type="button" class="img-trigger" data-lightbox-target="lightbox-{{ $id }}" aria-label="View full-size image">
+    <picture class="img-lightbox">
+      <img src="{{ $thumbnail }}"
+           {{ if $candidates }}srcset="{{ delimit $candidates ", " }}"{{ end }}
+           sizes="{{ $sizes }}"
+           alt="{{ $alt }}"
+           class="{{ $class }}"
+           width="{{ $imgWidth }}"
+           {{ if ne $imgHeight "auto" }}height="{{ $imgHeight }}"{{ if $hasExplicitHeight }} style="aspect-ratio: {{ $imgWidth }} / {{ $imgHeight }}"{{ end }}{{ end }}
+           {{ if eq $priority "true" }}fetchpriority="high"{{ else }}loading="lazy"{{ end }}
+           decoding="async">
+    </picture>
+  </button>
+  {{- with $caption }}
+  <figcaption class="post-figure-caption">{{ . | markdownify }}</figcaption>
+  {{- end }}
+</figure>
+
+<dialog id="lightbox-{{ $id }}" class="lightbox-dialog" aria-label="Full-size image" data-hires="{{ $hires }}">
+  <form method="dialog" class="lightbox-close-form">
+    <button type="submit" class="lightbox-close" aria-label="Close">×</button>
+  </form>
+  <img alt="{{ $alt }}" decoding="async">
+  {{- with $caption }}
+  <p class="lightbox-caption">{{ . | markdownify }}</p>
+  {{- end }}
+</dialog>

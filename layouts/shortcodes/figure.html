@@ -1,0 +1,11 @@
+{{ $src := .Get "src" }}
+{{ $alt := .Get "alt" }}
+{{ $caption := .Get "caption" }}
+{{ if not $src }}{{ errorf "figure shortcode needs src on %s" .Page.File.Path }}{{ end }}
+{{ if not (strings.TrimSpace $alt) }}{{ errorf "figure shortcode needs nonempty alt text on %s" .Page.File.Path }}{{ end }}
+{{ $resource := .Page.Resources.GetMatch $src }}
+{{ if not $resource }}{{ errorf "figure resource %q was not found on %s" $src .Page.File.Path }}{{ end }}
+<figure class="article-figure{{ if eq (.Get "unframed") "true" }} article-figure--unframed{{ end }}"{{ with .Get "width" }} style="width: {{ . }}; margin-inline: auto;"{{ end }}>
+  <img src="{{ $resource.RelPermalink }}" alt="{{ $alt }}" width="{{ $resource.Width }}" height="{{ $resource.Height }}" loading="lazy" decoding="async">
+  {{ with $caption }}<figcaption>{{ . | $.Page.RenderString }}</figcaption>{{ end }}
+</figure>

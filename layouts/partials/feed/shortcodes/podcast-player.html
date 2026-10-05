@@ -1,0 +1,3 @@
+{{- with .Page.Params.podcast_audio -}}
+<p><a href="{{ partial "feed/shortcodes/url.html" (dict "page" $.Page "url" .) }}">Listen to {{ $.Get "title" | default "the podcast episode" }}</a>{{ with $.Get "duration" }} ({{ . }}){{ end }}.</p>
+{{- end -}}

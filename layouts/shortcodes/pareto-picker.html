@@ -1,0 +1,38 @@
+{{- $script := resources.Get "js/pareto-picker.js" | minify | fingerprint -}}
+<style>
+  .pareto-picker{width:80%;max-width:100%;margin:1.5rem auto;font-family:var(--sans)}
+  .pareto-picker .pp-tabs{display:flex;flex-wrap:wrap;gap:0 1.1rem;margin:0 0 .4rem}
+  .pareto-picker .pp-tab{display:inline-flex;min-height:2.75rem;align-items:center;padding:.1rem 0 0;border:0;border-bottom:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:.72rem;letter-spacing:.01em;cursor:pointer}
+  .pareto-picker .pp-tab.on{border-bottom-color:var(--heading);color:var(--heading)}
+  .pareto-picker .pp-svg{display:block;width:100%;height:auto;margin:.35rem 0 .2rem}
+  .pareto-picker .pp-h{margin:1.1rem 0 .35rem;color:var(--muted);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+  .pareto-picker .pp-methods{display:flex;flex-wrap:wrap;gap:0 1.1rem;margin:0}
+  .pareto-picker .pp-method{display:inline-flex;min-height:2.75rem;align-items:center;padding:.1rem 0 0;border:0;border-bottom:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:.8rem;cursor:pointer}
+  .pareto-picker .pp-method.on{border-bottom-color:var(--heading);color:var(--heading)}
+  .pareto-picker .pp-controls{display:grid;gap:.45rem;margin-top:1rem}
+  .pareto-picker .pp-controls label{display:grid;grid-template-columns:8rem minmax(0,1fr) 2.75rem;align-items:center;gap:.6rem;color:var(--muted);font-size:.75rem}
+  .pareto-picker .pp-controls input[type=range]{min-width:0;width:100%;min-height:2.75rem;accent-color:var(--heading)}
+  .pareto-picker .pp-controls output{color:var(--heading);font-variant-numeric:tabular-nums;text-align:right}
+  .pareto-picker .pp-note{margin:.85rem 0 0;color:var(--muted);font-size:.75rem;line-height:1.5}
+  .pareto-picker .pp-grid{stroke:var(--line);stroke-width:1}
+  .pareto-picker .pp-axis{stroke:var(--faint);stroke-width:1.4}
+  .pareto-picker .pp-tick{fill:var(--muted)}
+  .pareto-picker .pp-dot{fill:var(--faint)}
+  .pareto-picker .pp-dot-m{fill:var(--muted)}
+  .pareto-picker .pp-front{fill:none;stroke:#287be0;stroke-width:1.8}
+  .pareto-picker .pp-frontpt{fill:#287be0;stroke:var(--background);stroke-width:1.4}
+  .pareto-picker .pp-knee{fill:#f26632}
+  .pareto-picker .pp-pickring{fill:none;stroke:#f26632;stroke-width:2.6}
+  .pareto-picker .pp-tangent{fill:none;stroke:#f26632;stroke-width:1.2;stroke-dasharray:5 4;opacity:.75}
+  .pareto-picker .pp-label{fill:var(--heading);font-weight:600}
+  .pareto-picker .pp-sublabel{fill:var(--muted)}
+  .pareto-picker .pp-hover{fill:none;stroke:var(--heading);stroke-width:1.6}
+  .pareto-picker .pp-tipbox{fill:var(--background);stroke:var(--line);stroke-width:1}
+  .pareto-picker .pp-tiptext{fill:var(--heading)}
+  .pareto-picker .pp-tipsub{fill:var(--muted)}
+  .pareto-picker .pp-svg{touch-action:pan-y}
+  .pareto-picker .pp-halo{paint-order:stroke;stroke:var(--background);stroke-width:3.5;stroke-linejoin:round}
+  @media (max-width:48rem){.pareto-picker{width:100%}.pareto-picker .pp-controls label{grid-template-columns:6.5rem minmax(0,1fr) 2.5rem}}
+</style>
+<div class="pareto-picker"></div>
+<script defer src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>

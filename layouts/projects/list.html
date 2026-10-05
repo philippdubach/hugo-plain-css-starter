@@ -1,0 +1,25 @@
+{{ define "main" }}
+  {{ $projects := where (where site.RegularPages ".Params.type" "Project") ".Params.unlisted" "ne" true }}
+  <main id="main-content" class="writing-list projects-list" tabindex="-1">
+    <header class="page-heading">
+      <h1>{{ .Title }}</h1>
+      {{ with .Description }}<p class="page-intro">{{ . }}</p>{{ end }}
+    </header>
+    <ol class="writing-index">
+      {{ range $projects.ByDate.Reverse }}
+        <li>
+          <time class="writing-index__date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02 Jan 2006" }}</time>
+          <div>
+            <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+            {{ with .Description }}<p>{{ . }}</p>{{ end }}
+            {{ $status := .Params.status }}
+            {{ $stack := .Params.stack }}
+            {{ with or $status $stack }}
+              <p class="item-meta">{{ with $status }}{{ . }}{{ end }}{{ if and $status $stack }} · {{ end }}{{ with $stack }}{{ delimit . " · " }}{{ end }}</p>
+            {{ end }}
+          </div>
+        </li>
+      {{ end }}
+    </ol>
+  </main>
+{{ end }}

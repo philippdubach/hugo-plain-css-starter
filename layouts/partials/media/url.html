@@ -1,0 +1,10 @@
+{{- $src := .src -}}
+{{- $url := $src -}}
+{{- if not (hasPrefix $src "http") -}}
+  {{- if site.Params.image_cdn -}}
+    {{- $url = printf "%s/cdn-cgi/image/width=%d,quality=%d,format=auto/%s" (strings.TrimSuffix "/" site.Params.image_cdn) (.width | default 1200) (.quality | default 80) (strings.TrimPrefix "/" $src) -}}
+  {{- else -}}
+    {{- $url = printf "/images/%s" (strings.TrimPrefix "/" $src) | absURL -}}
+  {{- end -}}
+{{- end -}}
+{{- return $url -}}

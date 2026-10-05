@@ -1,0 +1,10 @@
+{{- /* Keep code blocks minimal. Authors can enable line numbers with {linenos=true}. */ -}}
+{{- $lang := .Type -}}
+{{- $linenos := "false" -}}
+{{- with .Attributes.linenos -}}
+    {{- if or (eq . true) (eq . "true") -}}{{ $linenos = "table" }}{{- end -}}
+{{- end -}}
+{{- $hlOpts := printf "lineNos=%s,lineNumbersInTable=true,noClasses=false" $linenos -}}
+<div class="code-block">
+{{ highlight (trim .Inner "\n") $lang $hlOpts }}
+</div>

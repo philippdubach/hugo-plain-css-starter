@@ -1,0 +1,7 @@
+{{ if in .TableOfContents "<li>" }}
+  {{ $toc := replace .TableOfContents `<nav id="TableOfContents">` `<nav id="mobile-toc" aria-label="On this page">` }}
+  <details class="mobile-toc" data-mobile-toc>
+    <summary>Contents</summary>
+    {{ $toc | safeHTML }}
+  </details>
+{{ end }}

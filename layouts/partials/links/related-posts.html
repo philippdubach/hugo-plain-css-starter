@@ -1,0 +1,78 @@
+{{- $source := .Page -}}
+{{- $sourceFile := $source.File.Path -}}
+{{- $curated := dict -}}
+{{- if isset hugo.Data "related-reading" -}}
+  {{- $curated = index hugo.Data "related-reading" -}}
+  {{- if not (reflect.IsMap $curated) -}}
+    {{- errorf "related reading: registry must be an object; see %s" $source.File.Filename -}}
+    {{- $curated = dict -}}
+  {{- end -}}
+{{- end -}}
+{{- $refs := slice -}}
+{{- if isset $curated $sourceFile -}}{{- $refs = index $curated $sourceFile -}}{{- end -}}
+{{- if isset $source.Params "relatedposts" -}}
+  {{- $refs = $source.Params.relatedposts -}}
+{{- end -}}
+{{- if not (reflect.IsSlice $refs) -}}
+  {{- errorf "related reading: targets must be an ordered list; see %s" $source.File.Filename -}}
+  {{- $refs = slice -}}
+{{- end -}}
+{{- if gt (len $refs) 3 -}}
+  {{- errorf "related reading: at most three targets are allowed; see %s" $source.File.Filename -}}
+{{- end -}}
+{{- /* Inspect only this already-rendered article. Escaped code examples cannot
+      become real asides, and resolving a target never renders its content. */ -}}
+{{- $manual := dict -}}
+{{- range findRE `(?s)<aside\b[^>]*class="readnext"[^>]*>.*?</aside>` .Content -}}
+  {{- range findRE `href="[^"]+"` . -}}
+    {{- $href := strings.TrimPrefix `href="` . | strings.TrimSuffix `"` -}}
+    {{- $manual = merge $manual (dict $href true) -}}
+  {{- end -}}
+{{- end -}}
+{{- $registry := partialCached "links/post-targets.html" $source.Site $source.Site.Language.Lang -}}
+{{- $seen := dict -}}
+{{- $selected := slice -}}
+{{- range $refs -}}
+  {{- $ref := . -}}
+  {{- $description := "" -}}
+  {{- if reflect.IsMap . -}}
+    {{- $ref = index . "ref" -}}
+    {{- $description = index . "description" -}}
+    {{- if or (ne (printf "%T" $description) "string") (not $description) -}}
+      {{- errorf "related reading: structured entries need a nonempty description string; see %s" $source.File.Filename -}}
+      {{- continue -}}
+    {{- end -}}
+    {{- $description = strings.TrimSpace $description -}}
+    {{- if or (not $description) (gt (strings.RuneCount $description) 240) (findRE `[\r\n]` $description) -}}
+      {{- errorf "related reading: description must be one plain-text line of at most 240 characters; see %s" $source.File.Filename -}}
+      {{- continue -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if or (ne (printf "%T" $ref) "string") (not $ref) -}}
+    {{- errorf "related reading: each content ref must be a nonempty string; see %s" $source.File.Filename -}}
+    {{- continue -}}
+  {{- end -}}
+  {{- $target := $source.Site.GetPage $ref -}}
+  {{- if not $target -}}
+    {{- errorf "related reading: unresolved content ref %q; see %s" $ref $source.File.Filename -}}
+  {{- else -}}
+    {{- $html := $target.OutputFormats.Get "HTML" -}}
+    {{- $matched := slice -}}
+    {{- with $html -}}{{- $matched = index $registry .RelPermalink | default slice -}}{{- end -}}
+    {{- if or (not $html) (ne (len $matched) 1) (not (partial "links/eligible-post.html" $target)) -}}
+      {{- errorf "related reading: content ref %q must resolve to one eligible published HTML post; see %s" $ref $source.File.Filename -}}
+    {{- else if eq $target.Path $source.Path -}}
+      {{- errorf "related reading: content ref %q links to its own page; see %s" $ref $source.File.Filename -}}
+    {{- else if isset $seen $html.RelPermalink -}}
+      {{- errorf "related reading: duplicate content ref %q; see %s" $ref $source.File.Filename -}}
+    {{- else -}}
+      {{- $seen = merge $seen (dict $html.RelPermalink true) -}}
+      {{- /* A newly added inline recommendation may make a curated footer entry
+            redundant. Suppress it without substituting an unrelated filler. */ -}}
+      {{- if not (isset $manual $html.RelPermalink) -}}
+        {{- $selected = $selected | append (dict "Page" $target "Description" $description) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $selected -}}

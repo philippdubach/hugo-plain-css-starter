@@ -1,0 +1,18 @@
+{{ $href := .Get "href" }}
+{{ $title := .Get "title" }}
+{{ $text := .Get "text" }}
+{{ $icon := .Get "icon" | default "note" }}
+{{ if not $href }}{{ errorf "preview-link shortcode needs href on %s" .Page.File.Path }}{{ end }}
+{{ if not $title }}{{ errorf "preview-link shortcode needs title on %s" .Page.File.Path }}{{ end }}
+{{ if not $text }}{{ errorf "preview-link shortcode needs text on %s" .Page.File.Path }}{{ end }}
+{{ $previewID := printf "preview-%s-%d" (md5 .Page.RelPermalink) .Ordinal }}
+<span class="preview-link-shell">
+  <a class="preview-link" href="{{ $href }}" data-preview-trigger aria-describedby="{{ $previewID }}">{{ .Inner | .Page.RenderString }}</a>
+  <span class="link-preview" id="{{ $previewID }}" popover="manual" data-preview-card role="tooltip">
+    <span class="preview-card__icon" aria-hidden="true">{{ upper (substr $icon 0 1) }}</span>
+    <span class="preview-card__copy">
+      <strong>{{ $title }}</strong>
+      <span>{{ $text }}</span>
+    </span>
+  </span>
+</span>

@@ -1,0 +1,1 @@
+{{- partial "feed/shortcodes/emoji-cover.html" . -}}

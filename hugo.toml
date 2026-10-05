@@ -1,0 +1,147 @@
+baseURL = 'https://example.org/'
+locale = 'en-us'
+title = 'John Appleseed'
+timeZone = 'UTC'
+enableRobotsTXT = true
+enableGitInfo = false
+capitalizeListTitles = false
+
+# Keep development and production on the tested release.
+[module.hugoVersion]
+  min = "0.167.0"
+  max = "0.167.0"
+
+[pagination]
+  pagerSize = 20
+  path = 'page'
+
+[services]
+  [services.rss]
+    # Full-content feeds without a cap reached 1.8 MB at 88 posts and grow
+    # with every article; readers only need recent items (archive: /writing/).
+    limit = 25
+
+[params]
+  author = 'John Appleseed'
+  description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae nibh at neque interdum posuere."
+  keywords = ["Writing", "Software", "Research"]
+  rssFeedDescription = 'full'
+  site_name = 'John Appleseed'
+  alternate_site_name = 'JA'
+  locale = 'en_US'
+  default_image = '/images/placeholder.svg'
+  theme_color = '#ffffff'
+  msapplication_tile_color = '#ffffff'
+
+  intro = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+  brand_initials = "JA"
+  image_cdn = ""
+  podcast_name = "Lorem ipsum"
+  podcast_artwork = "/images/placeholder.svg"
+
+  [params.social]
+    email = "hello@example.org"
+
+  [params.newsletter]
+    preview = true
+    endpoint = ""
+    count_endpoint = ""
+    archive_endpoint = "/api/newsletters.json"
+    archive_base_url = "https://example.org/newsletter/"
+
+[markup]
+  [markup.highlight]
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = true
+    lineNos = true
+    lineNumbersInTable = true
+    noClasses = false
+    tabWidth = 4
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+    [markup.goldmark.extensions]
+      [markup.goldmark.extensions.passthrough]
+        enable = true
+        [markup.goldmark.extensions.passthrough.delimiters]
+          block = [['\[', '\]'], ['$$', '$$']]
+          inline = [['\(', '\)']]
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false
+
+[permalinks]
+  posts = '/posts/:slug/'
+
+[frontmatter]
+  date = ['date', 'publishDate', 'lastmod']
+  # Explicit editorial update dates take precedence. Git history is only the
+  # fallback so sitemap and Article dateModified values reflect real revisions.
+  lastmod = ['lastmod', ':git', 'date', 'publishDate']
+  publishDate = ['publishDate', 'date']
+  expiryDate = ['expiryDate']
+
+[taxonomies]
+  category = 'categories'
+  tag = 'tags'
+
+[related]
+  includeNewer = true
+  threshold = 20
+  toLower = true
+  [[related.indices]]
+    name = 'categories'
+    weight = 100
+  [[related.indices]]
+    name = 'tags'
+    weight = 80
+  [[related.indices]]
+    name = 'keywords'
+    weight = 60
+  [[related.indices]]
+    name = 'date'
+    weight = 10
+
+[mediaTypes]
+  [mediaTypes.'application/feed+json']
+    suffixes = ['json']
+  [mediaTypes.'application/linkset+json']
+    suffixes = ['json']
+
+[outputFormats]
+  [outputFormats.JSONFeed]
+    mediaType = 'application/feed+json'
+    baseName = 'feed'
+    isPlainText = true
+  [outputFormats.PostsAPI]
+    mediaType = 'application/json'
+    baseName = 'posts'
+    isPlainText = true
+    path = 'api'
+  [outputFormats.LLMSTxt]
+    mediaType = 'text/plain'
+    baseName = 'llms'
+    isPlainText = true
+    notAlternative = true
+  [outputFormats.LLMSFullTxt]
+    mediaType = 'text/plain'
+    baseName = 'llms-full'
+    isPlainText = true
+    notAlternative = true
+  [outputFormats.Markdown]
+    notAlternative = true
+  [outputFormats.APICatalog]
+    mediaType = 'application/linkset+json'
+    baseName = 'api-catalog'
+    isPlainText = true
+    notAlternative = true
+    rel = 'api-catalog'
+
+[outputs]
+  home = ['HTML', 'RSS', 'JSONFeed', 'PostsAPI', 'LLMSTxt', 'LLMSFullTxt', 'Sitemap', 'Markdown', 'APICatalog']
+  page = ['HTML', 'Markdown']
+  section = ['HTML', 'RSS', 'Sitemap', 'Markdown']
+  taxonomy = ['HTML', 'RSS', 'Markdown']
+  term = ['HTML', 'RSS', 'Markdown']

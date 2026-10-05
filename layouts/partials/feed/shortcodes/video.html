@@ -1,0 +1,11 @@
+{{- $src := .Get "src" -}}
+{{- $url := $src -}}
+{{- if not (hasPrefix $src "http") }}{{ $url = printf "%s/%s" (strings.TrimSuffix "/" site.BaseURL) (strings.TrimPrefix "/" $src) }}{{ end -}}
+{{- $label := .Get "alt" | default "Watch the video" -}}
+{{- $poster := .Get "poster" | default "" -}}
+{{- if $poster -}}
+  {{- if not (hasPrefix $poster "http") }}{{ $poster = partial "media/url.html" (dict "src" $poster "width" 1200) }}{{ end -}}
+<figure><a href="{{ $url }}"><img src="{{ $poster }}" alt="{{ $label }}" style="max-width:100%;height:auto;"></a><figcaption><a href="{{ $url }}">{{ $label }}</a></figcaption></figure>
+{{- else -}}
+<p><a href="{{ $url }}">{{ $label }}</a></p>
+{{- end -}}

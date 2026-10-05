@@ -1,0 +1,20 @@
+{{- /*
+  Returns posts in the given category that carry `faq` frontmatter,
+  sorted newest-first, excluding unlisted. The same aggregation was
+  previously duplicated in layouts/faq/single.html and
+  layouts/partials/structured-data.html — both ran a full
+  .Site.RegularPages scan + intersect on every faq/* page render.
+
+  Caller: pass the lowercased category as the context (.).
+  Variant key for partialCached: also the lowercased category.
+
+  Returns: []Page, sorted by .Date desc.
+*/ -}}
+{{- $categoryLower := . -}}
+{{- $matched := slice -}}
+{{- range where (where site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true -}}
+  {{- if and .Params.faq (intersect (apply .Params.categories "lower" ".") (slice $categoryLower)) -}}
+    {{- $matched = $matched | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- return sort $matched ".Date" "desc" -}}

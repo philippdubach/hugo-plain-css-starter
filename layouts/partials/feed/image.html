@@ -1,0 +1,3 @@
+{{- $url := partial "feed/url.html" (dict "Page" .Page "URL" .Destination) -}}
+<img src="{{ $url }}" alt="{{ .PlainText }}"{{ with .Title }} title="{{ . }}"{{ end }} style="max-width:100%;height:auto;">
+{{- /* Chomp whitespace around inline content. */ -}}

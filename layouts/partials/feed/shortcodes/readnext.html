@@ -1,0 +1,2 @@
+{{- $matched := partial "links/readnext-target.html" . -}}
+{{- range $matched }}<p>Related: <a href="{{ .Permalink }}">{{ .Title }}</a></p>{{ end -}}

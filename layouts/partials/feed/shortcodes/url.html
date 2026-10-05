@@ -1,0 +1,4 @@
+{{- /* Resolve media and links against the article, including fragments. */ -}}
+{{- $base := urls.Parse .page.Permalink -}}
+{{- $reference := urls.Parse .url -}}
+{{- return ($base.ResolveReference $reference).String -}}

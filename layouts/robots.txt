@@ -1,0 +1,11 @@
+# Search, AI-search, user-directed, and training crawlers are all permitted.
+# One RFC 9309 wildcard group avoids bot-specific rules silently replacing
+# shared directives as crawler names evolve.
+User-agent: *
+Allow: /
+Disallow: /cdn-cgi/
+
+Sitemap: {{ .Site.BaseURL }}sitemap.xml
+
+# Optional machine-readable discovery for non-Google consumers:
+# {{ .Site.BaseURL }}llms.txt

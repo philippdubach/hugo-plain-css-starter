@@ -1,0 +1,17 @@
+{{- /* Resolve the existing canonical HTML route in both output formats. */ -}}
+{{- $registry := partialCached "links/post-targets.html" site site.Language.Lang -}}
+{{- $matches := index $registry . | default slice -}}
+{{- $link := dict -}}
+{{- if ne (len $matches) 1 -}}
+  {{- errorf "research commentary: %q must resolve to one published HTML essay" . -}}
+{{- else -}}
+  {{- $target := index $matches 0 -}}
+  {{- if not (partial "links/eligible-post.html" $target) -}}
+    {{- errorf "research commentary: %q must resolve to an eligible published essay" . -}}
+  {{- else -}}
+    {{- with $target.OutputFormats.Get "HTML" -}}
+      {{- $link = dict "Title" $target.Title "RelPermalink" .RelPermalink "Permalink" .Permalink -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $link -}}

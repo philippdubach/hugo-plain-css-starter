@@ -1,0 +1,15 @@
+{{- $related := partial "links/related-posts.html" . -}}
+{{- with $related }}
+<aside class="related-reading" aria-labelledby="related-title">
+  <h2 id="related-title">Related reading</h2>
+  <ul>
+    {{- range $index, $entry := . }}
+      {{- $contextID := printf "related-context-%d" $index -}}
+      <li>
+        <a href="{{ $entry.Page.RelPermalink }}"{{ with $entry.Description }} class="related-reading__link--with-context" aria-describedby="{{ $contextID }}"{{ end }}>{{ $entry.Page.Title }}</a>
+        {{- with $entry.Description }}<p id="{{ $contextID }}" class="related-reading__context">{{ . }}</p>{{ end -}}
+      </li>
+    {{- end }}
+  </ul>
+</aside>
+{{- end -}}

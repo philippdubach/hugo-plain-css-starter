@@ -1,0 +1,20 @@
+{{- /* Match the public index represented by this feed; never publish unlisted pages. */ -}}
+{{- $pages := site.RegularPages -}}
+{{- if not .IsHome -}}
+  {{- if eq .Kind "taxonomy" -}}
+    {{- $pages = where $pages (printf "Params.%s" .Data.Plural) "ne" nil -}}
+  {{- else if eq .Section "writing" -}}
+    {{- $pages = where $pages "Params.type" "ne" "Project" -}}
+  {{- else if eq .Section "faq" -}}
+    {{- $pages = where $pages "Params.faq" "ne" nil -}}
+  {{- else if eq .Section "projects" -}}
+    {{- $pages = where $pages "Params.type" "Project" -}}
+  {{- else -}}
+    {{- $pages = .RegularPagesRecursive -}}
+  {{- end -}}
+{{- end -}}
+{{- $pages = where (where $pages "Section" "posts") "Params.unlisted" "ne" true -}}
+{{- $pages = $pages.ByDate.Reverse -}}
+{{- $limit := site.Config.Services.RSS.Limit -}}
+{{- if ge $limit 1 -}}{{- $pages = first $limit $pages -}}{{- end -}}
+{{- return $pages -}}

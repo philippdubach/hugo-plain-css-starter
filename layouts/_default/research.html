@@ -1,0 +1,45 @@
+{{ define "main" }}
+  <main id="main-content" class="standalone-page research-page" tabindex="-1">
+    <article>
+      <header class="page-heading">
+        <h1>{{ .Title }}</h1>
+        {{ with .Description }}<p class="page-intro">{{ . }}</p>{{ end }}
+      </header>
+      {{ $profileLabels := dict "arxiv" "arXiv" "google_scholar" "Google Scholar" "researchgate" "ResearchGate" "ssrn" "SSRN" }}
+      <nav class="research-profiles" aria-label="Research profiles">
+        {{ range $name, $url := hugo.Data.research.profiles }}<a href="{{ $url }}" rel="external noopener">{{ index $profileLabels $name }}</a>{{ end }}
+      </nav>
+      <div class="article-body">{{ .Content }}</div>
+      {{ range hugo.Data.research.publications }}
+        <section class="research-year" aria-labelledby="research-{{ .year }}">
+          <h2 id="research-{{ .year }}">{{ .year }}</h2>
+          <ol class="research-list">
+            {{ range .items }}
+              <li>
+                <h3>{{ .title }}</h3>
+                <p class="research-authors">{{ delimit .authors ", " }}{{ if .draft }} · Working paper{{ end }}</p>
+                <p>{{ .summary }}</p>
+                <p class="research-links">
+                  {{ if and .arxiv_pending (not .doi) }}<span>Read on arXiv</span>{{ end }}
+                  {{ with .doi }}
+                    {{ $label := "Read paper" }}
+                    {{ if hasPrefix (lower .) "10.48550/arxiv." }}
+                      {{ $label = "Read on arXiv" }}
+                    {{ else if hasPrefix (lower .) "10.2139/ssrn." }}
+                      {{ $label = "Read on SSRN" }}
+                    {{ end }}
+                    <a href="https://doi.org/{{ . }}" rel="external noopener">{{ $label }}</a>
+                  {{ end }}
+                  {{ with .commentary }}{{ with partial "links/research-commentary.html" . }}<a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}{{ end }}
+                  {{ with .code }}<a href="{{ . }}" rel="external noopener">Code</a>{{ end }}
+                  {{ with .dataset }}<a href="{{ . }}" rel="external noopener">Dataset</a>{{ end }}
+                  {{ with .data }}<a href="{{ . }}" rel="external noopener">Data</a>{{ end }}
+                </p>
+              </li>
+            {{ end }}
+          </ol>
+        </section>
+      {{ end }}
+    </article>
+  </main>
+{{ end }}

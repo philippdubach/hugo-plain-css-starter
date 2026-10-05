@@ -1,0 +1,80 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{{/* Content Security Policy - hash-allowlisted inline scripts (theme snippet, MathJax config) */}}
+{{/* Note: frame-ancestors directive only works via HTTP headers, not meta tags */}}
+{{/* Keep CSP aligned with static/_headers. */}}
+{{/* The sha256 hashes cover the minified emitted bytes of the two inline scripts; */}}
+{{/* scripts/check.mjs asserts every emitted inline script matches this allowlist. */}}
+{{/* Production only: the dev server does not minify, so the inline-script bytes */}}
+{{/* (and therefore hashes) differ and the policy would block the theme snippet. */}}
+{{ if not hugo.IsServer }}<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-4qVeyGJe9myWelMbNnOnhUsPBgSyDNusLjIA/+DdyA0=' 'sha256-Crw/S/18khkosRWC2HZzyuw00TrnvWJxTr9MDfLv0H4=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net; object-src 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">{{ end }}
+<meta name="color-scheme" content="light dark">
+{{- $description := .Params.seoDescription | default .Description | default site.Params.description | plainify -}}
+{{- $brand := site.Params.site_name | default site.Title -}}
+{{- $pageTitle := .Params.seoTitle | default .Title -}}
+{{- $isError := eq .Kind "404" -}}
+{{- $defaultRobots := cond $isError "noindex, nofollow" "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" -}}
+{{- $robots := .Params.robots | default $defaultRobots -}}
+{{- $image := site.Params.default_image -}}
+{{- with .Params.images }}{{ $image = index . 0 }}{{ end -}}
+{{- with .Params.image }}{{ $image = . }}{{ end -}}
+{{- if and $image (not (hasPrefix $image "http")) }}{{ $image = $image | absURL }}{{ end -}}
+<meta name="description" content="{{ $description }}">
+<meta name="author" content="{{ site.Params.author }}">
+<meta name="robots" content="{{ $robots }}">
+<title>{{ if strings.Contains $pageTitle $brand }}{{ $pageTitle }}{{ else }}{{ $pageTitle }} · {{ $brand }}{{ end }}</title>
+{{ if not $isError }}<link rel="canonical" href="{{ .Permalink }}">{{ end }}
+<link rel="author" href="{{ "/about/" | absURL }}">
+{{- /* Body images and video load from the image CDN; warming the connection
+       takes DNS+TCP+TLS off the first image's critical path. */}}
+{{ with site.Params.image_cdn }}<link rel="preconnect" href="{{ . }}">{{ end }}
+{{ with site.Home.OutputFormats.Get "RSS" }}<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }}">{{ end }}
+{{ with .OutputFormats.Get "RSS" }}{{ if ne .Permalink (site.Home.OutputFormats.Get "RSS").Permalink }}<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ $.Title }} · {{ site.Title }}">{{ end }}{{ end }}
+{{ with .OutputFormats.Get "Markdown" }}<link rel="alternate" type="text/markdown" href="{{ .RelPermalink }}" title="{{ $.Title }} in Markdown">{{ end }}
+<link rel="alternate" type="text/plain" href="/llms.txt" title="LLM discovery file">
+<meta property="og:title" content="{{ $pageTitle }}">
+<meta property="og:description" content="{{ $description }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:type" content="{{ if eq .Section "posts" }}article{{ else }}website{{ end }}">
+<meta property="og:site_name" content="{{ $brand }}">
+<meta property="og:locale" content="{{ site.Params.locale }}">
+{{ with $image }}<meta property="og:image" content="{{ . }}">
+<meta property="og:image:alt" content="{{ $pageTitle }}">
+{{- $source := path.Base . -}}
+{{- with index hugo.Data "image-dimensions" $source -}}
+<meta property="og:image:width" content="{{ .width }}">
+<meta property="og:image:height" content="{{ .height }}">
+{{- end -}}
+{{ end }}
+{{ if eq .Section "posts" }}<meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+<meta property="article:modified_time" content="{{ (partial "metadata/lastmod.html" .).Format "2006-01-02T15:04:05Z07:00" }}">
+{{ with .Params.categories }}<meta property="article:section" content="{{ index . 0 }}">{{ end }}
+{{ with .Params.keywords }}{{ range first 8 . }}<meta property="article:tag" content="{{ . }}">{{ end }}{{ end }}{{ end }}
+<meta name="twitter:card" content="summary_large_image">
+{{ with site.Params.social.twitter }}<meta name="twitter:creator" content="@{{ . }}">{{ end }}
+<meta name="twitter:title" content="{{ $pageTitle }}">
+<meta name="twitter:description" content="{{ $description }}">
+{{ with $image }}<meta name="twitter:image" content="{{ . }}">
+<meta name="twitter:image:alt" content="{{ $pageTitle }}">{{ end }}
+{{ hugo.Generator }}
+{{ partial "structured-data.html" . }}
+
+<script>
+  (() => {
+    let theme = "light";
+    try {
+      const savedTheme = localStorage.getItem("starter-theme-v1");
+      if (savedTheme === "dark" || savedTheme === "light") theme = savedTheme;
+      else if (typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches) theme = "dark";
+    } catch {}
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
+
+{{ $styles := resources.Get "css/main.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $styles.RelPermalink }}" integrity="{{ $styles.Data.Integrity }}">
+{{ $script := resources.Get "js/site.js" | minify | fingerprint }}
+<script defer src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" sizes="any">
+
+<link rel="manifest" href="/icons/site.webmanifest">

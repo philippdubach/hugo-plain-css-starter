@@ -1,0 +1,9 @@
+{{ define "main" }}
+  <main id="main-content" class="writing-list" tabindex="-1">
+    <header class="page-heading">
+      <h1>{{ .Title }}</h1>
+      {{ with .Description }}<p class="page-intro">{{ . }}</p>{{ end }}
+    </header>
+    {{ partial "writing-index.html" . }}
+  </main>
+{{ end }}

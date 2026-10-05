@@ -1,0 +1,21 @@
+writing:
+  - software
+  - design
+software:
+  - design
+  - data
+design:
+  - data
+  - science
+data:
+  - science
+  - methods
+science:
+  - methods
+  - notes
+methods:
+  - notes
+  - writing
+notes:
+  - writing
+  - software

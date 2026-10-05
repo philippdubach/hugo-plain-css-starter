@@ -1,0 +1,10 @@
+{{- $src := .Get "src" -}}
+{{- $alt := .Get "alt" -}}
+{{- if not $src }}{{ errorf "figure shortcode needs src on %s" .Page.File.Path }}{{ end -}}
+{{- if not (strings.TrimSpace $alt) }}{{ errorf "figure shortcode needs nonempty alt text on %s" .Page.File.Path }}{{ end -}}
+{{- $resource := .Page.Resources.GetMatch $src -}}
+{{- if not $resource }}{{ errorf "figure resource %q was not found on %s" $src .Page.File.Path }}{{ end -}}
+<figure>
+  <img src="{{ $resource.Permalink }}" alt="{{ $alt }}" width="{{ $resource.Width }}" height="{{ $resource.Height }}" style="max-width:100%;height:auto;">
+  {{- with .Get "caption" }}<figcaption>{{ $.Page.RenderString . }}</figcaption>{{ end }}
+</figure>

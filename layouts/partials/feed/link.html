@@ -1,0 +1,3 @@
+{{- $url := partial "feed/url.html" (dict "Page" .Page "URL" .Destination) -}}
+<a href="{{ $url }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text }}</a>
+{{- /* Chomp whitespace around inline content. */ -}}

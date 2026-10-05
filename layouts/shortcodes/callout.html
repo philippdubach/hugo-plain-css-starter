@@ -1,0 +1,6 @@
+{{ $title := .Get "title" }}
+{{ $labelID := printf "callout-%d" .Ordinal }}
+<aside class="callout"{{ with $title }} aria-labelledby="{{ $labelID }}"{{ end }}>
+  {{ with $title }}<p class="callout__title" id="{{ $labelID }}">{{ . }}</p>{{ end }}
+  <div>{{ $.Inner | $.Page.RenderString (dict "display" "block") }}</div>
+</aside>

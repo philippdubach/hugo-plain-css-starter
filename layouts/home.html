@@ -1,0 +1,44 @@
+{{ define "main" }}
+  {{ $allPosts := where (where site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true }}
+  {{ $articles := where $allPosts ".Params.type" "ne" "Project" }}
+  {{ $projects := where $allPosts ".Params.type" "eq" "Project" }}
+  <main id="main-content" class="home-content" tabindex="-1">
+    <article>
+      <h1>{{ .Title }}</h1>
+      <p class="home-intro">
+        {{ site.Params.intro }}
+        <a href="/about/">About John <span aria-hidden="true">→</span></a>
+      </p>
+
+      <section class="home-section" aria-labelledby="writing-title">
+        <div class="section-heading-row">
+          <h2 id="writing-title">Latest writing</h2>
+          <a href="/writing/">All writing</a>
+        </div>
+        <ol class="compact-index">
+          {{ range first 4 $articles.ByDate.Reverse }}
+            <li>
+              <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02 Jan 2006" }}</time>
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </li>
+          {{ end }}
+        </ol>
+      </section>
+
+      <section class="home-section" aria-labelledby="projects-title">
+        <div class="section-heading-row">
+          <h2 id="projects-title">Latest projects</h2>
+          <a href="/projects/">All projects</a>
+        </div>
+        <ol class="compact-index">
+          {{ range first 4 $projects.ByDate.Reverse }}
+            <li>
+              <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02 Jan 2006" }}</time>
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </li>
+          {{ end }}
+        </ol>
+      </section>
+    </article>
+  </main>
+{{ end }}

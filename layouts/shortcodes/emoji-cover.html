@@ -1,0 +1,6 @@
+{{- $emoji := .Get "emoji" | default "🤝" -}}
+{{- $label := .Get "label" | default "Editorial cover" -}}
+
+<figure class="emoji-cover emoji-cover--sweet-spot" role="img" aria-label="{{ $label }}">
+  <span class="emoji-cover__glyph" aria-hidden="true">{{ $emoji }}</span>
+</figure>

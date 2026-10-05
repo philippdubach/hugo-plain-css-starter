@@ -1,0 +1,15 @@
+<aside class="newsletter-preview" aria-label="Newsletter signup">
+  <p class="newsletter-preview__title">New essays, once a month</p>
+  {{- /* method/action make the no-JS fallback a real POST to the API instead
+         of a default GET that would leak the email into the URL and logs.
+         With JS the submit handler preventDefaults and uses fetch instead. */ -}}
+  <form class="newsletter-preview__form" method="post" action="{{ site.Params.newsletter.endpoint }}" {{ if site.Params.newsletter.preview }}data-newsletter-preview{{ else }}data-newsletter-endpoint="{{ site.Params.newsletter.endpoint }}" data-newsletter-count-endpoint="{{ site.Params.newsletter.count_endpoint }}"{{ end }} novalidate>
+    <label for="{{ .id }}">Email address</label>
+    <div class="newsletter-preview__controls">
+      <input id="{{ .id }}" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com">
+      <button type="submit"{{ if site.Params.newsletter.preview }} disabled{{ end }}>Subscribe</button>
+    </div>
+    <p class="newsletter-preview__note" data-newsletter-note><a href="/impressum/">Demo only</a>. No subscription is sent.</p>
+    <p class="newsletter-preview__message" data-newsletter-message role="status" aria-live="polite"></p>
+  </form>
+</aside>

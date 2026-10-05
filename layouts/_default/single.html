@@ -1,0 +1,51 @@
+{{ define "main" }}
+  {{ $isPost := eq .Section "posts" }}
+  {{ $isProject := eq .Params.type "Project" }}
+  <main id="main-content" class="{{ if $isPost }}article-content{{ else }}standalone-page{{ end }}" tabindex="-1">
+    <article>
+      <header class="{{ if $isPost }}article-header{{ else }}page-heading{{ end }}">
+        <h1>{{ .Title }}</h1>
+        {{ if $isPost }}
+          <p class="article-meta">
+            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+            <span aria-hidden="true">·</span>
+            <span>{{ .ReadingTime }} min read</span>
+            {{ with .GetTerms "categories" }}<span aria-hidden="true">·</span><span>{{ range $i, $term := . }}{{ if $i }}, {{ end }}<a href="{{ $term.RelPermalink }}">{{ $term.LinkTitle }}</a>{{ end }}</span>{{ end }}
+          </p>
+          {{ if and (.Lastmod.After .Date) (ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02")) }}
+            <p class="article-updated">Updated {{ .Lastmod.Format "2 January 2006" }}</p>
+          {{ end }}
+        {{ else }}
+          {{ if not .Params.hideIntro }}{{ with .Description }}<p class="page-intro">{{ . }}</p>{{ end }}{{ end }}
+        {{ end }}
+      </header>
+
+      {{ if and $isPost (in .TableOfContents "<li>") }}{{ partial "article-toc-mobile.html" . }}{{ end }}
+      {{ if and $isPost (not $isProject) }}{{ with .Params.takeaways }}
+        <aside class="key-takeaways" aria-labelledby="takeaways-title">
+          <h2 id="takeaways-title">Key takeaways</h2>
+          <ul>{{ range . }}<li>{{ . | markdownify }}</li>{{ end }}</ul>
+        </aside>
+      {{ end }}{{ end }}
+
+      {{ $content := .Content }}
+      <div class="article-body{{ if .Params.math }} has-math{{ end }}">
+        {{ $content }}
+      </div>
+
+      {{ if $isPost }}
+        <footer class="article-footer">
+          {{ with .Params.keywords }}<p><strong>Topics:</strong> {{ delimit (first 5 .) ", " }}</p>{{ end }}
+          {{ if $isProject }}
+            {{ with .Params.repo }}<a href="{{ . }}" rel="external noopener">Repository</a>{{ end }}
+            {{ with .Params.doi }}<a href="https://doi.org/{{ . }}" rel="external noopener">DOI</a>{{ end }}
+          {{ end }}
+        </footer>
+        {{ partial "related-reading.html" (dict "Page" . "Content" $content) }}
+        {{ partial "newsletter-form.html" (dict "id" "post-newsletter-email") }}
+      {{ end }}
+    </article>
+  </main>
+{{ end }}
+
+{{ define "timeline" }}{{ partial "timeline.html" . }}{{ end }}

@@ -1,0 +1,483 @@
+{{/* ============================================================
+  Structured Data — @graph pattern with @id cross-references
+
+  Entities:
+  - Person (@id: #person) — author identity, E-E-A-T signals
+  - WebSite (@id: #website) — site-level metadata
+  - BlogPosting/TechArticle/Article (@id: #article) — per-page content
+  - BreadcrumbList — navigation hierarchy
+  - ProfilePage — about page
+  - CollectionPage — research page
+============================================================ */}}
+
+{{/* Build unified sameAs array from hugo.toml params */}}
+{{- $sameAs := slice -}}
+{{- with .Site.Params.social.github }}{{ $sameAs = $sameAs | append (printf "https://github.com/%s" .) }}{{ end -}}
+{{- with .Site.Params.social.bluesky }}{{ $sameAs = $sameAs | append (printf "https://bsky.app/profile/%s" .) }}{{ end -}}
+{{- with .Site.Params.social.twitter }}{{ $sameAs = $sameAs | append (printf "https://x.com/%s" .) }}{{ end -}}
+{{- with .Site.Params.social.linkedin }}{{ $sameAs = $sameAs | append (printf "https://www.linkedin.com/in/%s/" .) }}{{ end -}}
+{{- with .Site.Params.academic.google_scholar }}{{ $sameAs = $sameAs | append . }}{{ end -}}
+{{- with .Site.Params.academic.researchgate }}{{ $sameAs = $sameAs | append . }}{{ end -}}
+{{- with .Site.Params.academic.orcid }}{{ $sameAs = $sameAs | append . }}{{ end -}}
+{{- with .Site.Params.academic.ssrn }}{{ $sameAs = $sameAs | append . }}{{ end -}}
+{{- with .Site.Params.academic.arxiv }}{{ $sameAs = $sameAs | append . }}{{ end -}}
+
+{{/* Reusable @id references */}}
+{{- $personId := printf "%s#person" .Site.BaseURL -}}
+{{- $websiteId := printf "%s#website" .Site.BaseURL -}}
+
+{{/* Person entity — consistent across all pages. */}}
+{{- $person := dict
+  "@type" "Person"
+  "@id" $personId
+  "name" .Site.Params.author
+  "url" (printf "%sabout/" .Site.BaseURL)
+  "description" ((.Site.GetPage "/about").Description | default .Site.Params.description)
+  "knowsAbout" ((.Site.GetPage "/about").Params.expertise | default .Site.Params.keywords)
+  "sameAs" $sameAs
+-}}
+
+{{/* WebSite entity */}}
+{{- $website := dict
+  "@type" "WebSite"
+  "@id" $websiteId
+  "name" .Site.Title
+  "alternateName" .Site.Params.alternate_site_name
+  "url" (print .Site.BaseURL)
+  "description" .Site.Params.description
+  "inLanguage" (.Site.Language.Lang | default "en")
+  "publisher" (dict "@id" $personId)
+-}}
+
+{{/* ===== HOMEPAGE: Person + WebSite + CollectionPage ===== */}}
+{{ if .IsHome }}
+{{- $homeId := printf "%s#articles" .Site.BaseURL -}}
+{{- $articles := where (where .Site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true -}}
+{{- $articles = where $articles ".Params.type" "!=" "Project" -}}
+{{- $articles = $articles.ByDate.Reverse -}}
+{{- /* about[] keeps the page's visible editorial domains machine-readable. */ -}}
+{{- $homeAbout := slice (dict "@id" $personId) -}}
+
+{{- $homeLastmod := partial "metadata/lastmod.html" . -}}
+
+{{- $homeCollection := dict
+  "@type" "CollectionPage"
+  "@id" $homeId
+  "name" "Articles"
+  "url" .Site.BaseURL
+  "description" $.Params.description
+  "about" $homeAbout
+  "isPartOf" (dict "@id" $websiteId)
+  "author" (dict "@id" $personId)
+  "dateModified" ($homeLastmod.Format "2006-01-02T15:04:05Z07:00")
+-}}
+
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@graph" (slice $person $website $homeCollection) | jsonify | safeJS }}
+</script>
+{{ end }}
+
+{{/* ===== ABOUT PAGE: Person + ProfilePage ===== */}}
+{{ if eq .RelPermalink "/about/" }}
+{{- $profilePage := dict
+  "@type" "ProfilePage"
+  "@id" (printf "%s#profile" .Permalink)
+  "url" .Permalink
+  "name" .Title
+  "description" (.Description | default .Site.Params.description)
+  "dateModified" ((partial "metadata/lastmod.html" .).Format "2006-01-02T15:04:05Z07:00")
+  "isPartOf" (dict "@id" $websiteId)
+  "mainEntity" (dict "@id" $personId)
+-}}
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@graph" (slice $person $website $profilePage) | jsonify | safeJS }}
+</script>
+{{ end }}
+
+{{/* ===== RESEARCH PAGE: Person + WebSite + CollectionPage with ScholarlyArticle items =====
+     v2.6: restructured to @graph pattern so $personId is dereferenceable.
+     Each ScholarlyArticle declares identifier (DOI), datePublished, sameAs (DOI URL +
+     derived arXiv/SSRN abstract URL), inLanguage, isPartOf (CollectionPage),
+     creator (Person), mainEntityOfPage, publisher (DOI prefix detection),
+     keywords, and subjectOf (commentary blog post when present). */}}
+{{ if eq .RelPermalink "/research/" }}
+{{ with hugo.Data.research }}
+{{- $collectionId := printf "%sresearch/" $.Site.BaseURL -}}
+{{- /* Build all ScholarlyArticle items as a slice of dicts */ -}}
+{{- $articles := slice -}}
+{{- range .publications -}}
+  {{- $year := .year -}}
+  {{- range .items -}}
+    {{- $art := dict
+      "@type" "ScholarlyArticle"
+      "headline" .title
+      "name" .title
+      "datePublished" (printf "%d" $year)
+      "inLanguage" (.language | default "en")
+      "author" (dict "@id" $personId)
+      "creator" (dict "@id" $personId)
+      "isPartOf" (dict "@id" $collectionId)
+      "mainEntityOfPage" $collectionId
+    -}}
+    {{- with .summary }}{{- $art = merge $art (dict "abstract" .) -}}{{- end -}}
+    {{- with .keywords }}{{- $art = merge $art (dict "keywords" .) -}}{{- end -}}
+    {{- /* identifier (DOI as PropertyValue) and url + sameAs */ -}}
+    {{- with .doi -}}
+      {{- $doiUrl := printf "https://doi.org/%s" . -}}
+      {{- $art = merge $art (dict
+        "url" $doiUrl
+        "identifier" (dict "@type" "PropertyValue" "propertyID" "DOI" "value" .)
+      ) -}}
+      {{- /* sameAs: include both DOI URL and the abstract page URL derived from DOI prefix */ -}}
+      {{- $sa := slice $doiUrl -}}
+      {{- if hasPrefix . "10.48550/arXiv." -}}
+        {{- $sa = $sa | append (printf "https://arxiv.org/abs/%s" (replace . "10.48550/arXiv." "")) -}}
+      {{- else if hasPrefix . "10.2139/ssrn." -}}
+        {{- $sa = $sa | append (printf "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=%s" (replace . "10.2139/ssrn." "")) -}}
+      {{- end -}}
+      {{- $art = merge $art (dict "sameAs" $sa) -}}
+      {{- /* publisher via DOI prefix detection (or .publication) */ -}}
+      {{- $pub := dict -}}
+      {{- with $.Params.publication -}}{{- /* unused, but reserved */ -}}{{- end -}}
+      {{- if hasPrefix . "10.48550" -}}
+        {{- $pub = dict "@type" "Organization" "name" "arXiv" "url" "https://arxiv.org" -}}
+      {{- else if hasPrefix . "10.2139" -}}
+        {{- $pub = dict "@type" "Organization" "name" "SSRN" "url" "https://ssrn.com" -}}
+      {{- end -}}
+      {{- if $pub }}{{- $art = merge $art (dict "publisher" $pub) -}}{{- end -}}
+    {{- end -}}
+    {{- /* If .publication is set, override publisher with the venue name */ -}}
+    {{- with .publication -}}
+      {{- $art = merge $art (dict "publisher" (dict "@type" "Organization" "name" .)) -}}
+    {{- end -}}
+    {{- /* Bidirectional cross-link to commentary blog post */ -}}
+    {{- with .commentary -}}
+      {{- $art = merge $art (dict "subjectOf" (dict
+        "@type" "BlogPosting"
+        "url" (printf "%s%s" $.Site.BaseURL (strings.TrimPrefix "/" .))
+      )) -}}
+    {{- end -}}
+    {{- /* Authors as full Person list when more than one author OR explicit `authors` field */ -}}
+    {{- with .authors -}}
+      {{- if gt (len .) 1 -}}
+        {{- $authorsList := slice -}}
+        {{- range . -}}
+          {{- if eq . "Appleseed, J." -}}
+            {{- $authorsList = $authorsList | append (dict "@id" $personId) -}}
+          {{- else -}}
+            {{- $authorsList = $authorsList | append (dict "@type" "Person" "name" .) -}}
+          {{- end -}}
+        {{- end -}}
+        {{- $art = merge $art (dict "author" $authorsList "creator" $authorsList) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $articles = $articles | append $art -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $collection := dict
+  "@type" "CollectionPage"
+  "@id" $collectionId
+  "name" "Research"
+  "url" $collectionId
+  "description" $.Params.description
+  "mainEntity" (dict "@id" $personId)
+  "about" (dict "@id" $personId)
+  "isPartOf" (dict "@id" $websiteId)
+  "author" (dict "@id" $personId)
+  "dateModified" ((partial "metadata/lastmod.html" $).Format "2006-01-02T15:04:05Z07:00")
+  "hasPart" $articles
+-}}
+
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@graph" (slice $person $website $collection) | jsonify | safeJS }}
+</script>
+{{ end }}
+{{ end }}
+
+{{/* ===== PROJECTS PAGE: Person + WebSite + CollectionPage with ItemList of TechArticle =====
+     Mirrors research CollectionPage register. Each project = TechArticle ListItem with
+     position, url, headline, datePublished, and inLanguage. */}}
+{{ if eq .RelPermalink "/projects/" }}
+{{- $collectionId := printf "%sprojects/" .Site.BaseURL -}}
+{{- $projects := where (where .Site.RegularPages "Params.type" "Project") ".Params.unlisted" "ne" true -}}
+{{- $projects = $projects.ByDate.Reverse -}}
+{{- /* Cap at 20 — same Google rich-result reasoning as the homepage
+       articles ItemList. numberOfItems below still reports the full count. */ -}}
+{{- $projectItemsSrc := first 20 $projects -}}
+{{- $items := slice -}}
+{{- range $i, $page := $projectItemsSrc -}}
+  {{- $art := dict
+    "@type" "TechArticle"
+    "headline" $page.Title
+    "name" $page.Title
+    "url" $page.Permalink
+    "datePublished" ($page.Date.Format "2006-01-02")
+    "inLanguage" "en"
+    "author" (dict "@id" $personId)
+    "creator" (dict "@id" $personId)
+    "isPartOf" (dict "@id" $collectionId)
+    "mainEntityOfPage" $page.Permalink
+  -}}
+  {{- with $page.Params.description -}}{{- $art = merge $art (dict "abstract" .) -}}{{- end -}}
+  {{- with $page.Params.keywords -}}{{- $art = merge $art (dict "keywords" .) -}}{{- end -}}
+  {{- /* The project commentary cites a paper; it is not the same work. */ -}}
+  {{- with $page.Params.doi -}}
+    {{- $art = merge $art (dict "citation" (dict
+      "@type" "ScholarlyArticle"
+      "url" (printf "https://doi.org/%s" .)
+      "identifier" (dict "@type" "PropertyValue" "propertyID" "DOI" "value" .)
+    )) -}}
+  {{- end -}}
+  {{- $items = $items | append (dict
+    "@type" "ListItem"
+    "position" (add $i 1)
+    "url" $page.Permalink
+    "item" $art
+  ) -}}
+{{- end -}}
+
+{{- $itemList := dict
+  "@type" "ItemList"
+  "itemListOrder" "https://schema.org/ItemListOrderDescending"
+  "numberOfItems" (len $projects)
+  "itemListElement" $items
+-}}
+
+{{- /* about[] — Person + DefinedTerm entries with sameAs to Wikipedia/Wikidata
+       for entity-association on AI search engines. */ -}}
+{{- $aboutDomains := slice (dict "@id" $personId) -}}
+
+{{- /* BreadcrumbList for the index — Home → Projects. The site's IsPage-gated
+       breadcrumb block does not fire for section-list pages. */ -}}
+{{- $breadcrumb := dict
+  "@type" "BreadcrumbList"
+  "@id" (printf "%s#breadcrumb" $collectionId)
+  "itemListElement" (slice
+    (dict "@type" "ListItem" "position" 1 "name" "Home" "item" $.Site.BaseURL)
+    (dict "@type" "ListItem" "position" 2 "name" "Projects" "item" $collectionId))
+-}}
+
+{{- $collection := dict
+  "@type" "CollectionPage"
+  "@id" $collectionId
+  "name" "Projects"
+  "url" $collectionId
+  "description" $.Params.description
+  "mainEntity" $itemList
+  "about" $aboutDomains
+  "isPartOf" (dict "@id" $websiteId)
+  "author" (dict "@id" $personId)
+  "breadcrumb" (dict "@id" (printf "%s#breadcrumb" $collectionId))
+  "dateModified" ((partial "metadata/lastmod.html" $).Format "2006-01-02T15:04:05Z07:00")
+-}}
+
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@graph" (slice $person $website $collection $breadcrumb) | jsonify | safeJS }}
+</script>
+{{ end }}
+
+{{/* ===== BREADCRUMBS: Single pages ===== */}}
+{{ if and .IsPage (ne .Kind "404") }}
+{{- $hasSection := and .Section (not .CurrentSection.Params.headless) -}}
+{{- $sectionName := .Section | humanize -}}
+{{- $sectionURL := printf "%s%s/" .Site.BaseURL .Section -}}
+{{- if eq .Section "posts" -}}
+  {{- $sectionName = "Writing" -}}
+  {{- $sectionURL = "/writing/" | absURL -}}
+  {{- if eq .Params.type "Project" -}}
+    {{- $sectionName = "Projects" -}}
+    {{- $sectionURL = "/projects/" | absURL -}}
+  {{- end -}}
+{{- end -}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{ .Site.BaseURL }}"
+    }
+    {{ if $hasSection }},
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ $sectionName }}",
+      "item": "{{ $sectionURL }}"
+    }
+    {{ end }},
+    {
+      "@type": "ListItem",
+      "position": {{ if $hasSection }}3{{ else }}2{{ end }},
+      "name": "{{ .Title }}",
+      "item": "{{ .Permalink }}"
+    }
+  ]
+}
+</script>
+{{ end }}
+
+{{/* ===== FAQ CATEGORY PAGES: visible Q&A only =====
+     This mirrors layouts/faq/single.html exactly. It is intentionally not
+     emitted on articles or collection pages where the Q&A is not visible. */}}
+{{ if and .IsPage (eq .Section "faq") }}
+{{- $categoryLower := .Params.category | lower -}}
+{{- $postsWithFAQ := partialCached "faq-posts-by-category.html" $categoryLower $categoryLower -}}
+{{- $allFAQs := slice -}}
+{{- range $postsWithFAQ -}}
+  {{- range .Params.faq -}}
+    {{- $allFAQs = $allFAQs | append (dict "@type" "Question" "name" .question "acceptedAnswer" (dict "@type" "Answer" "text" (.answer | markdownify | plainify))) -}}
+  {{- end -}}
+{{- end -}}
+{{- $displayFAQs := first 20 $allFAQs -}}
+{{- if gt (len $displayFAQs) 0 -}}
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@type" "FAQPage" "mainEntity" $displayFAQs | jsonify | safeJS }}
+</script>
+{{- end -}}
+{{ end }}
+
+{{/* ===== BREADCRUMBS: Section and taxonomy pages =====
+     Excluded: /projects/ — the projects @graph block above already declares a
+     cross-referenced BreadcrumbList with @id so the CollectionPage.breadcrumb
+     property dereferences correctly. */}}
+{{ if and (not .IsPage) (not .IsHome) (ne .Kind "404") (ne .RelPermalink "/projects/") }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{ .Site.BaseURL }}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ .Title }}",
+      "item": "{{ .Permalink }}"
+    }
+  ]
+}
+</script>
+{{ end }}
+
+{{/* ===== SUBSCRIBE PAGE: Person + WebSite + WebPage with SubscribeAction.
+     Suppresses the BlogPosting block below — /subscribe/ is a conversion
+     utility, not editorial content; emitting BlogPosting with wordCount:1
+     misleads crawlers about content type. */}}
+{{ if eq .RelPermalink "/subscribe/" }}
+{{- $personId := printf "%s#person" .Site.BaseURL -}}
+{{- $websiteId := printf "%s#website" .Site.BaseURL -}}
+{{- $webpage := dict
+    "@type" "WebPage"
+    "@id" (printf "%s#webpage" .Permalink)
+    "url" .Permalink
+    "name" .Title
+    "description" (.Description | default (printf "Subscribe to %s" .Site.Title))
+    "isPartOf" (dict "@id" $websiteId)
+    "about" (dict "@id" $personId)
+-}}
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@graph" (slice $person $website $webpage) | jsonify | safeJS }}
+</script>
+{{ end }}
+
+{{/* ===== ARTICLE PAGES: Person + WebSite + Article @graph ===== */}}
+{{ if and .IsPage (eq .Section "posts") }}
+{{- $articleType := "BlogPosting" -}}
+{{- if eq .Params.type "Project" }}{{ $articleType = "TechArticle" }}{{ end -}}
+{{- if eq .Params.type "Essay" }}{{ $articleType = "Article" }}{{ end -}}
+
+{{- $desc := .Params.seoDescription | default .Description | plainify -}}
+{{- if not $desc }}{{ $desc = .Summary | plainify | truncate 160 }}{{ end -}}
+
+{{- /* Keep the article graph compact: canonical identity, dates, author,
+       description, media, and content classification. */ -}}
+{{- $article := dict
+  "@type" $articleType
+  "@id" (printf "%s#article" .Permalink)
+  "headline" .Title
+  "name" .Title
+  "description" $desc
+  "abstract" $desc
+  "wordCount" .WordCount
+  "timeRequired" (printf "PT%dM" .ReadingTime)
+  "inLanguage" (.Site.Language.Lang | default "en")
+  "datePublished" (.Date.Format "2006-01-02T15:04:05Z07:00")
+  "dateModified" ((partial "metadata/lastmod.html" .).Format "2006-01-02T15:04:05Z07:00")
+  "author" (dict "@id" $personId)
+  "publisher" (dict "@id" $personId)
+  "isPartOf" (dict "@id" $websiteId)
+  "url" .Permalink
+  "isAccessibleForFree" true
+  "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
+-}}
+
+{{/* Conditional: keywords */}}
+{{- if .Params.keywords }}
+  {{- $article = merge $article (dict "keywords" .Params.keywords) -}}
+{{- else if .Params.tags }}
+  {{- $article = merge $article (dict "keywords" .Params.tags) -}}
+{{- end }}
+
+{{/* Conditional: about (from categories) */}}
+{{- if .Params.categories }}
+  {{- $aboutList := slice -}}
+  {{- range .Params.categories }}
+    {{- $aboutList = $aboutList | append (dict "@type" "Thing" "name" .) -}}
+  {{- end }}
+  {{- $article = merge $article (dict "about" $aboutList) -}}
+{{- end }}
+
+{{/* Conditional: Project proficiency */}}
+{{- if eq .Params.type "Project" }}
+  {{- $article = merge $article (dict "proficiencyLevel" "Expert") -}}
+{{- end }}
+
+{{/* Conditional: external source citation */}}
+{{- $citations := slice -}}
+{{- with .Params.external_url }}
+  {{- $citations = $citations | append (dict "@type" "CreativeWork" "url" .) -}}
+{{- end }}
+
+{{/* A project write-up and its source paper have separate identities. */}}
+{{- with .Params.doi -}}
+  {{- $doiUrl := printf "https://doi.org/%s" . -}}
+  {{- $citations = $citations | append (dict
+    "@type" "ScholarlyArticle"
+    "url" $doiUrl
+    "identifier" (dict "@type" "PropertyValue" "propertyID" "DOI" "value" .)
+  ) -}}
+{{- end -}}
+{{- if $citations -}}
+  {{- $article = merge $article (dict "citation" $citations) -}}
+{{- end -}}
+
+{{/* Conditional: image */}}
+{{- $image := "" -}}
+{{- if .Params.images }}
+  {{- $image = index .Params.images 0 -}}
+  {{- if not (hasPrefix $image "http") }}{{ $image = $image | absURL }}{{ end -}}
+{{- else if .Params.image }}
+  {{- $image = .Params.image | absURL -}}
+{{- else if .Site.Params.default_image }}
+  {{- $image = .Site.Params.default_image -}}
+{{- end }}
+{{- if $image }}
+  {{- $article = merge $article (dict
+    "image" (dict "@type" "ImageObject" "url" $image)
+    "thumbnailUrl" $image
+  ) -}}
+{{- end }}
+
+<script type="application/ld+json">
+{{ dict "@context" "https://schema.org" "@graph" (slice $person $website $article) | jsonify | safeJS }}
+</script>
+
+{{ end }}

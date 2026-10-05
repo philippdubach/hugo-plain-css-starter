@@ -1,0 +1,5 @@
+{{- /* One published-post policy for inline and footer recommendations. */ -}}
+{{- $page := . -}}
+{{- $robots := $page.Params.robots | default "" | lower -}}
+{{- $eligible := and (eq $page.Section "posts") (not $page.Draft) (not ($page.PublishDate.After now)) (not (and (not $page.ExpiryDate.IsZero) ($page.ExpiryDate.Before now))) (not $page.Params.private) (not $page.Params.unlisted) (not (strings.Contains $robots "noindex")) -}}
+{{- return $eligible -}}

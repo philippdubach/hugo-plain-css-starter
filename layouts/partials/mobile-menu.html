@@ -1,0 +1,20 @@
+<dialog class="mobile-menu" id="mobile-menu" data-mobile-menu aria-labelledby="mobile-menu-title" closedby="any" autofocus tabindex="-1">
+  <div class="mobile-menu__panel">
+    <div class="mobile-menu__header">
+      <h2 id="mobile-menu-title">Menu</h2>
+      <button class="icon-button" type="button" data-menu-close aria-label="Close menu">
+        <span class="control-symbol control-symbol--close" aria-hidden="true"></span>
+      </button>
+    </div>
+    <nav class="mobile-menu__navigation" aria-label="Mobile navigation">
+      <ul>
+        <li><a href="{{ site.Home.RelPermalink }}"{{ if .IsHome }} aria-current="page"{{ end }}>Home</a></li>
+        <li><a href="{{ (site.GetPage "/writing").RelPermalink }}"{{ if or (eq .Section "writing") (eq .Section "posts") }} aria-current="page"{{ end }}>Writing</a></li>
+        <li><a href="{{ (site.GetPage "/projects").RelPermalink }}"{{ if eq .RelPermalink "/projects/" }} aria-current="page"{{ end }}>Projects</a></li>
+        <li><a href="{{ (site.GetPage "/research").RelPermalink }}"{{ if eq .RelPermalink "/research/" }} aria-current="page"{{ end }}>Research</a></li>
+        <li><a href="/links/">Links</a></li>
+        <li class="mobile-menu__secondary"><a href="/subscribe/"{{ if eq .RelPermalink "/subscribe/" }} aria-current="page"{{ end }}>Subscribe</a></li>
+      </ul>
+    </nav>
+  </div>
+</dialog>

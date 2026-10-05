@@ -1,0 +1,45 @@
+{{- $pages := partial "feed/pages.html" . -}}
+{{- $descriptionMode := site.Params.rssFeedDescription | default "full" -}}
+{{- $updated := time.AsTime "0001-01-01T00:00:00Z" -}}
+{{- range $pages -}}
+  {{- if .Date.After $updated -}}{{- $updated = .Date -}}{{- end -}}
+  {{- if .Lastmod.After $updated -}}{{- $updated = .Lastmod -}}{{- end -}}
+{{- end -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+{{ printf "<?xml-stylesheet type=\"text/xsl\" href=%q?>" ("/rss.xsl" | absURL) | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} on {{ site.Title }}{{ end }}</title>
+    <link>{{ .Permalink }}</link>
+    <description>Recent content {{ if not .IsHome }}in {{ .Title }} {{ end }}on {{ site.Title }}</description>
+    <image>
+      <url>{{ "/icons/favicon-96x96.png" | absURL }}</url>
+      <title>{{ site.Title }}</title>
+      <link>{{ site.BaseURL }}</link>
+      <width>96</width><height>96</height>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>{{ site.Language.Locale }}</language>
+    {{ with site.Params.social.email }}<managingEditor>{{ . }} ({{ site.Params.author }})</managingEditor>
+    <webMaster>{{ . }} ({{ site.Params.author }})</webMaster>{{ end }}
+    {{ with site.Copyright }}<copyright>{{ . }}</copyright>{{ end }}
+    {{ if not $updated.IsZero }}<lastBuildDate>{{ $updated.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</lastBuildDate>{{ end }}
+    <ttl>5</ttl>
+    {{ with .OutputFormats.Get "RSS" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
+    {{ range $pages }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</pubDate>
+      {{ with site.Params.social.email }}<author>{{ . }} ({{ site.Params.author }})</author>{{ end }}
+      <guid isPermaLink="true">{{ .Permalink }}</guid>
+      {{ range .Params.categories }}<category>{{ . }}</category>{{ end }}
+      {{ if eq $descriptionMode "full" }}
+      <description>{{ partial "feed/content.html" . | html }}</description>
+      {{ else if eq $descriptionMode "summary" }}
+      <description>{{ .Description | default (.Summary | plainify) | html }}</description>
+      {{ else }}{{ errorf "Unsupported RSS description mode %q" $descriptionMode }}{{ end }}
+    </item>
+    {{ end }}
+  </channel>
+</rss>

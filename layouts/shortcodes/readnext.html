@@ -1,0 +1,7 @@
+{{- $matched := partial "links/readnext-target.html" . -}}
+{{- range $matched }}
+<aside class="readnext" aria-label="Related reading">
+  <span class="readnext-label">Related</span>
+  <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+</aside>
+{{- end }}

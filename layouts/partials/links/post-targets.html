@@ -1,0 +1,12 @@
+{{- /* Index HTML routes, never the current output format or a guessed filename.
+      Store collisions so the caller can report an ambiguous slug. */ -}}
+{{- $targets := dict -}}
+{{- range where .RegularPages "Section" "posts" -}}
+  {{- $page := . -}}
+  {{- with .OutputFormats.Get "HTML" -}}
+    {{- $route := .RelPermalink -}}
+    {{- $pages := index $targets $route | default slice -}}
+    {{- $targets = merge $targets (dict $route ($pages | append $page)) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $targets -}}

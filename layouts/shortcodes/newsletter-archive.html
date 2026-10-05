@@ -1,0 +1,9 @@
+{{- $endpoint := site.Params.newsletter.archive_endpoint -}}
+{{- if not $endpoint }}{{ errorf "newsletter-archive shortcode needs params.newsletter.archive_endpoint on %s" .Page.File.Path }}{{ end -}}
+{{- $script := resources.Get "js/newsletter-archive.js" | minify | fingerprint -}}
+<div class="archive-issues" data-newsletter-archive data-newsletter-archive-endpoint="{{ $endpoint }}" data-newsletter-archive-base-url="{{ site.Params.newsletter.archive_base_url }}" aria-live="polite" aria-busy="true">
+  <p class="archive-issues__status" data-newsletter-archive-status>Loading issues…</p>
+  <noscript><p class="archive-issues__status">JavaScript is required to load the issue index.</p></noscript>
+</div>
+<p class="archive-issues__cta"><a href="/subscribe/">Subscribe to get the next issue →</a></p>
+<script defer src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>

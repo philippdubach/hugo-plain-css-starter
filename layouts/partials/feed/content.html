@@ -1,0 +1,14 @@
+{{- /* Feed-specific shortcodes and render hooks produce portable article HTML.
+      Raw HTML and Goldmark footnote links bypass hooks, so normalize their URLs too. */ -}}
+{{- $page := . -}}
+{{- $content := string .Content -}}
+{{- range findRESubmatch `(?i)\b(href|src|poster|cite)="([^"]*)"` $content -}}
+  {{- $attribute := index . 0 -}}
+  {{- $name := index . 1 -}}
+  {{- $url := index . 2 -}}
+  {{- if $url -}}
+    {{- $resolved := partial "feed/url.html" (dict "Page" $page "URL" (htmlUnescape $url)) -}}
+    {{- $content = replace $content $attribute (printf `%s="%s"` $name (htmlEscape $resolved)) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $content -}}

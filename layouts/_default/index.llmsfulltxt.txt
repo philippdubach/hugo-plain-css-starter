@@ -1,0 +1,28 @@
+{{- $baseURL := .Site.BaseURL -}}
+{{- $allPosts := where (where .Site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true -}}
+{{- $allPosts = $allPosts.ByDate.Reverse -}}
+{{- $latest := index ($allPosts.ByLastmod.Reverse) 0 -}}
+# {{ .Site.Params.author }} - Extended Summary Index
+
+> This is the extended version of llms.txt with each article listed once and its summary inline. For the compact version, see [llms.txt]({{ $baseURL }}llms.txt).
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae nibh at neque interdum posuere.
+
+- Last Updated: {{ (partial "metadata/lastmod.html" $latest).Format "2006-01-02" }}
+- Total Articles: {{ len $allPosts }}
+- Site: {{ $baseURL }}
+
+## Articles ({{ len $allPosts }})
+{{ range $allPosts }}
+### [{{ .Title }}]({{ .Permalink }})
+Published: {{ .Date.Format "2006-01-02" }}
+Description: {{ .Params.description }}
+{{- /* Editorial descriptions are already concise prose. Avoid repeating them
+       as a summary or importing lightbox controls from HTML shortcodes. */ -}}
+{{ if not .Params.description }}{{ $summary := .Summary | replaceRE `(?is)<(script|style|dialog|form)\b[^>]*>.*?</(?:script|style|dialog|form)>` "" | replaceRE `(?is)<a\b[^>]*class=["'][^"']*lightbox[^"']*["'][^>]*>.*?</a>` "" | plainify | htmlUnescape | chomp }}
+Summary: {{ $summary }}
+{{ end }}
+{{ with .Params.takeaways }}Key findings:
+{{ range . }}- {{ . }}
+{{ end }}{{ end }}
+{{ end }}

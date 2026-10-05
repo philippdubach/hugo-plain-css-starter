@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {{ partial "head.html" . }}
+  </head>
+  {{ $isArticle := and .IsPage (eq .Section "posts") }}
+  {{ $hasTimeline := and $isArticle (gt (len (.Params.timeline | default (slice))) 0) }}
+  <body class="{{ if .IsHome }}page-home{{ else if $isArticle }}page-article{{ else }}page-list{{ end }} section-{{ .Section }}">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    {{ partial "mobile-header.html" . }}
+
+    <div class="site-layout{{ if $hasTimeline }} has-timeline{{ end }}">
+      {{ partial "site-rail.html" . }}
+      {{ block "main" . }}{{ end }}
+      {{ block "timeline" . }}{{ end }}
+    </div>
+
+    {{ partial "footer.html" . }}
+    {{ partial "mobile-menu.html" . }}
+    {{- if .Param "math" -}}
+    {{ partialCached "math.html" . }}
+    {{- end -}}
+  </body>
+</html>

@@ -1,0 +1,31 @@
+{{- $baseURL := .Site.BaseURL -}}
+{{- $posts := where (where .Site.RegularPages "Section" "posts") ".Params.unlisted" "ne" true -}}
+{{- $posts = $posts.ByDate.Reverse -}}
+{{- $latest := index ($posts.ByLastmod.Reverse) 0 -}}
+# {{ .Site.Params.author }}
+
+> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae nibh at neque interdum posuere.
+
+Canonical site: {{ $baseURL }}. Author: {{ .Site.Params.author }}. {{ len $posts }} articles. Last substantive update: {{ (partial "metadata/lastmod.html" $latest).Format "2006-01-02" }}. Every link below points to a clean Markdown representation; the corresponding canonical HTML URL is declared in its HTTP Link header.
+
+## Main pages
+
+- [Home]({{ $baseURL }}index.md): Latest writing and projects.
+- [About]({{ $baseURL }}about/index.md): Author background, research profiles, and site purpose.
+- [Research]({{ $baseURL }}research/index.md): Papers, preprints, identifiers, and publication links.
+- [Projects]({{ $baseURL }}projects/index.md): Placeholder software and project write-ups.
+- [Writing]({{ $baseURL }}writing/index.md): Complete chronological article index.
+
+## Articles
+
+{{ range $posts -}}
+- [{{ .Title }}]({{ .Permalink }}index.md){{ with .Description }}: {{ . | plainify }}{{ end }}
+{{ end }}
+
+## Optional
+
+- [Extended summary index]({{ $baseURL }}llms-full.txt): Every article listed once with its summary.
+- [Posts API]({{ $baseURL }}api/posts.json): Structured metadata for the complete article collection.
+- [JSON Feed]({{ $baseURL }}feed.json): JSON Feed 1.1 with recent full-text entries.
+- [RSS Feed]({{ $baseURL }}index.xml): RSS 2.0 with recent full-text entries.
+- [Sitemap]({{ $baseURL }}sitemap.xml): Canonical, indexable HTML URLs and accurate modification dates.
