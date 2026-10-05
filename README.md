@@ -35,7 +35,7 @@ This builds the site and checks identity isolation, internal links, local assets
 2. Replace `content/` and `data/research.yaml` with your own writing. The example policy pages are not legal templates.
 3. Update `data/related-reading.json` after changing article paths. Targets must be published and must not link to the source itself.
 4. Replace the local placeholder graphic and favicon. The `img` shortcode uses local `/images/` files by default. Set `params.image_cdn` to your own Cloudflare image domain to use responsive CDN transforms, and allow that origin in the image and media CSP directives.
-5. For a real newsletter, set its endpoint, count endpoint and archive endpoint; turn preview off. Update the form note and deploy a matching backend. Allow the API origin in the connect and form CSP directives. The backend is not included.
+5. For a real newsletter, set its endpoint, count endpoint and archive endpoint; turn preview off. Update the form note, the demo-only service checks and deploy a matching backend. Allow the API origin in the connect and form CSP directives. The backend is not included.
 6. Set `podcast_audio` on a post and use the `podcast-player` shortcode for your own audio. Configure the cover in `params.podcast_artwork`.
 
 Set `tableWidth = "80%"` on a post to center its tables at that width. Without this field, tables fill the reading column and wide tables scroll inside their own region.

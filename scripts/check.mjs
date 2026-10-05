@@ -4,7 +4,9 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 
 const root = resolve('public');
-const base = 'https://example.org';
+const catalogue = JSON.parse(await readFile(join(root, 'api/posts.json'), 'utf8'));
+const base = new URL(catalogue.site.url).origin;
+const author = catalogue.site.author;
 const files = [];
 async function walk(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -64,15 +66,15 @@ for (const [file, text] of html) {
   assert(/<title>[^<]+<\/title>/.test(text), `${file}: title missing`);
   assert(text.includes('name=description') || text.includes('name="description"'), `${file}: description missing`);
   assert(text.includes('rel=canonical') || text.includes('rel="canonical"'), `${file}: canonical missing`);
-  assert(text.includes('John Appleseed'), `${file}: demo author missing`);
+  assert(text.includes(author), `${file}: configured author missing`);
 }
 for (const file of files.filter(f => extname(f) === '.json')) JSON.parse(await readFile(file, 'utf8'));
 const feed = JSON.parse(await readFile(join(root, 'feed.json'), 'utf8'));
-assert.equal(feed.items.length, 7);
-assert(feed.items.every(item => item.authors?.[0]?.name === 'John Appleseed'));
+assert(feed.items.length > 0 && feed.items.length <= catalogue.total_count);
+assert(feed.items.every(item => item.authors?.[0]?.name === author));
 assert((await readFile(join(root, 'index.xml'), 'utf8')).includes('<rss'));
 assert((await readFile(join(root, 'sitemap.xml'), 'utf8')).includes('<urlset'));
-assert((await readFile(join(root, 'llms.txt'), 'utf8')).includes('John Appleseed'));
+assert((await readFile(join(root, 'llms.txt'), 'utf8')).includes(author));
 assert(available.has(join(root, 'api/posts.json')));
 assert(available.has(join(root, 'api-catalog.json')));
 const config = await readFile('hugo.toml', 'utf8');
