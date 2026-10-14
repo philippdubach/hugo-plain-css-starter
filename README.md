@@ -1,5 +1,12 @@
 # Hugo and plain CSS starter
 
+![Desktop homepage with the John Appleseed demo author, navigation rail, writing and projects.](docs/screenshots/home-desktop.png)
+
+<p>
+  <img src="docs/screenshots/article-dark.png" width="74%" alt="Sample project in dark mode with article contents, a callout and a table.">
+  <img src="docs/screenshots/home-mobile.png" width="24%" alt="Mobile homepage with the demo author, menu, theme switch, writing and projects.">
+</p>
+
 A small Hugo site for writing, projects and research. The example author is John Appleseed. All posts, biographies, research entries and newsletter issues are fictional placeholders.
 
 ## Run locally
@@ -46,7 +53,7 @@ Run `npm run check`, then serve `public/` on any static host. Set the real base 
 
 The generated HTML already contains the content and metadata. Dynamic rendering, analytics and a production newsletter service are not required. Lighthouse results depend on your content, hosting and test conditions; this starter does not guarantee a score.
 
-The starter has a fresh Git history. It contains no original articles, screenshots, publication records, production configuration or service credentials.
+The starter has a fresh Git history. It contains no original articles, publication records, production configuration or service credentials.
 
 ## License
 
